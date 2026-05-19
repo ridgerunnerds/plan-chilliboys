@@ -15,9 +15,9 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    const user = await storageLogin(email, password)
+    const { user, error: loginError } = await storageLogin(email, password)
     if (!user) {
-      setError('Invalid email or password')
+      setError(loginError || 'Invalid email or password')
       return
     }
     setUser(user)

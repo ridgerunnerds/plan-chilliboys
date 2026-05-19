@@ -137,10 +137,12 @@ async function ensureProfile(authUser: any): Promise<User> {
 }
 
 /* ─── Auth ─── */
-export async function login(email: string, password: string): Promise<User | null> {
+export async function login(email: string, password: string): Promise<{ user: User | null; error?: string }> {
   const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-  if (error || !data.user) return null
-  return ensureProfile(data.user)
+  if (error) return { user: null, error: error.message }
+  if (!data.user) return { user: null, error: 'No user returned' }
+  const user = await ensureProfile(data.user)
+  return { user }
 }
 
 export async function register(
