@@ -1,0 +1,5 @@
+i have a idea to create a portal for a manufacturing company you can find 
+all the copy in the /projects/chillibiys folder i want a admin log in.  
+Then project manager login 
+then i want a customer catalog and place for people to make accounts
+and login and share plans, ideas and things.  
