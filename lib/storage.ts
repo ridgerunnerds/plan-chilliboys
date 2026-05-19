@@ -201,9 +201,9 @@ export async function getUserByEmail(email: string): Promise<User | null> {
       .from('profiles')
       .select('*')
       .ilike('email', email)
-      .single()
-    if (error || !data) return null
-    return toUser(data)
+      .limit(1)
+    if (error || !data || data.length === 0) return null
+    return toUser(data[0])
   } catch {
     return null
   }
