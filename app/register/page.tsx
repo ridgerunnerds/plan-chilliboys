@@ -4,38 +4,33 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/components/AuthProvider'
-import { saveUser, getUserByEmail, User } from '@/lib/storage'
+import { register as storageRegister, getUserByEmail } from '@/lib/storage'
 
 export default function RegisterPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [confirm, setConfirm] = useState('')
   const [error, setError] = useState('')
-  const { login } = useAuth()
+  const { setUser } = useAuth()
   const router = useRouter()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    if (password !== confirm) {
-      setError('Passwords do not match')
+
+    const existing = await getUserByEmail(email)
+    if (existing) {
+      setError('An account with that email already exists')
       return
     }
-    if (getUserByEmail(email)) {
-      setError('An account with this email already exists')
+
+    const user = await storageRegister(name.trim(), email.trim().toLowerCase(), password)
+    if (!user) {
+      setError('Failed to create account. Please try again.')
       return
     }
-    const user: User = {
-      id: `user-${Date.now()}`,
-      email,
-      name,
-      role: 'client',
-      password,
-      createdAt: new Date().toISOString(),
-    }
-    saveUser(user)
-    login(user)
+
+    setUser(user)
     router.push('/dashboard')
   }
 
@@ -50,7 +45,7 @@ export default function RegisterPage() {
         )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-chilliblue-200 mb-1">Full Name</label>
+            <label className="block text-sm font-medium text-chilliblue-200 mb-1">Full name</label>
             <input
               type="text"
               className="input"
@@ -76,16 +71,6 @@ export default function RegisterPage() {
               className="input"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-chilliblue-200 mb-1">Confirm Password</label>
-            <input
-              type="password"
-              className="input"
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
               required
             />
           </div>

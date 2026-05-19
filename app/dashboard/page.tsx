@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/components/AuthProvider'
-import { Project, getProjects, saveProject, FeedbackMessage, User } from '@/lib/storage'
+import { Project, getProjects, saveProject, FeedbackMessage } from '@/lib/storage'
 
 export default function DashboardPage() {
   const { user, loading } = useAuth()
@@ -17,15 +17,18 @@ export default function DashboardPage() {
       router.push('/login')
       return
     }
-    if (user) {
-      setProjects(getProjects().filter((p) => p.userId === user.id))
+    async function load() {
+      if (!user) return
+      const all = await getProjects()
+      setProjects(all.filter((p) => p.userId === user.id))
     }
+    if (user) load()
   }, [user, loading, router])
 
   if (loading) return <div className="p-12 text-center text-steel-400">Loading...</div>
   if (!user) return null
 
-  const sendReply = (projectId: string) => {
+  const sendReply = async (projectId: string) => {
     const text = replyText[projectId]?.trim()
     if (!text) return
     const project = projects.find((p) => p.id === projectId)
@@ -38,7 +41,7 @@ export default function DashboardPage() {
       createdAt: new Date().toISOString(),
     }
     const updated = { ...project, feedback: [...project.feedback, msg] }
-    saveProject(updated)
+    await saveProject(updated)
     setProjects(projects.map((p) => (p.id === projectId ? updated : p)))
     setReplyText({ ...replyText, [projectId]: '' })
   }

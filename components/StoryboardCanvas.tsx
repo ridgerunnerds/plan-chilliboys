@@ -20,7 +20,7 @@ export default function StoryboardCanvas({ storyboard, onChange, readOnly }: Pro
   const updateElements = (elements: StoryboardElement[]) => {
     const updated = { ...storyboard, elements, updatedAt: new Date().toISOString() }
     onChange(updated)
-    saveStoryboard(updated)
+    saveStoryboard(updated).catch((err) => console.error('Failed to save storyboard:', err))
   }
 
   const addElement = (type: StoryboardElement['type'], content: string, width = 120, height = 80) => {
@@ -69,7 +69,7 @@ export default function StoryboardCanvas({ storyboard, onChange, readOnly }: Pro
 
   const handleMouseUp = useCallback(() => {
     if (dragging) {
-      saveStoryboard(storyboard)
+      saveStoryboard(storyboard).catch((err) => console.error('Failed to save storyboard:', err))
       setDragging(null)
     }
   }, [dragging, storyboard])

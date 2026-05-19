@@ -2,26 +2,25 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { useAuth } from '@/components/AuthProvider'
-import { getUserByEmail } from '@/lib/storage'
+import { login as storageLogin } from '@/lib/storage'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
-  const { login } = useAuth()
+  const { setUser } = useAuth()
   const router = useRouter()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    const user = getUserByEmail(email)
-    if (!user || user.password !== password) {
+    const user = await storageLogin(email, password)
+    if (!user) {
       setError('Invalid email or password')
       return
     }
-    login(user)
+    setUser(user)
     if (user.role === 'admin') router.push('/admin')
     else if (user.role === 'pm') router.push('/pm')
     else router.push('/dashboard')
@@ -61,17 +60,9 @@ export default function LoginPage() {
             Log In
           </button>
         </form>
-        <p className="text-center text-steel-400 text-sm mt-4">
-          Don&apos;t have an account?{' '}
-          <Link href="/register" className="text-chilliblue-400 hover:text-chilliblue-300">
-            Sign up
-          </Link>
+        <p className="text-center text-steel-500 text-xs mt-4">
+          Contact your admin to request an account.
         </p>
-        <div className="mt-6 pt-4 border-t border-steel-700 text-xs text-steel-500">
-          <p>Demo accounts:</p>
-          <p>admin@chilliboys.mx / admin123</p>
-          <p>pm@chilliboys.mx / pm123</p>
-        </div>
       </div>
     </div>
   )

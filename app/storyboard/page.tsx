@@ -19,19 +19,22 @@ export default function StoryboardPage() {
       router.push('/login')
       return
     }
-    if (user) {
-      const all = getStoryboards().filter((s) => s.userId === user.id)
-      setStoryboards(all)
-      if (all.length > 0 && !activeId) {
-        setActiveId(all[0].id)
+    async function load() {
+      if (!user) return
+      const all = await getStoryboards()
+      const mine = all.filter((s) => s.userId === user.id)
+      setStoryboards(mine)
+      if (mine.length > 0 && !activeId) {
+        setActiveId(mine[0].id)
       }
     }
+    if (user) load()
   }, [user, loading, router, activeId])
 
   if (loading) return <div className="p-12 text-center text-steel-400">Loading...</div>
   if (!user) return null
 
-  const createStoryboard = () => {
+  const createStoryboard = async () => {
     if (!newName.trim()) return
     const sb: Storyboard = {
       id: `sb-${Date.now()}`,
@@ -41,7 +44,7 @@ export default function StoryboardPage() {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }
-    saveStoryboard(sb)
+    await saveStoryboard(sb)
     setStoryboards([...storyboards, sb])
     setActiveId(sb.id)
     setNewName('')
@@ -50,7 +53,7 @@ export default function StoryboardPage() {
 
   const active = storyboards.find((s) => s.id === activeId)
 
-  const submitForQuote = () => {
+  const submitForQuote = async () => {
     if (!active) return
     const project: Project = {
       id: `proj-${Date.now()}`,
@@ -64,7 +67,7 @@ export default function StoryboardPage() {
       feedback: [],
       createdAt: new Date().toISOString(),
     }
-    saveProject(project)
+    await saveProject(project)
     alert('Project submitted for quote! Check your dashboard for updates.')
     router.push('/dashboard')
   }

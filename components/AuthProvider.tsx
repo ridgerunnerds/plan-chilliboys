@@ -1,19 +1,19 @@
 'use client'
 
-import React, { createContext, useContext, useEffect, useState } from 'react'
-import { User, getSession, setSession, clearSession, seedDemoData } from '@/lib/storage'
+import { createContext, useContext, useState, useEffect } from 'react'
+import { User, getSession, logout as storageLogout, seedDemoData } from '@/lib/storage'
 
 interface AuthContextType {
   user: User | null
-  login: (user: User) => void
-  logout: () => void
+  setUser: (user: User | null) => void
+  logout: () => Promise<void>
   loading: boolean
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
-  login: () => {},
-  logout: () => {},
+  setUser: () => {},
+  logout: async () => {},
   loading: true,
 })
 
@@ -26,27 +26,27 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    seedDemoData()
-    const session = getSession()
-    if (session?.user) {
-      setUser(session.user)
+    let mounted = true
+    async function init() {
+      await seedDemoData()
+      const session = await getSession()
+      if (mounted) {
+        if (session?.user) setUser(session.user)
+        setLoading(false)
+      }
     }
-    setLoading(false)
+    init()
+    return () => { mounted = false }
   }, [])
 
-  const login = (user: User) => {
-    setSession({ user })
-    setUser(user)
-  }
-
-  const logout = () => {
-    clearSession()
+  const logout = async () => {
+    await storageLogout()
     setUser(null)
     window.location.href = '/'
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, setUser, logout, loading }}>
       {children}
     </AuthContext.Provider>
   )

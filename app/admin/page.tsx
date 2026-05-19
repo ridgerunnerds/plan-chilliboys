@@ -3,6 +3,9 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
+import CreateProjectModal from '@/components/CreateProjectModal'
+import ManageUserModal from '@/components/ManageUserModal'
+import { formatWhatsAppMessage, openWhatsApp, GREG_WHATSAPP } from '@/lib/whatsapp'
 import { User, Project, getUsers, getProjects, saveProject, deleteProject, FeedbackMessage } from '@/lib/storage'
 
 export default function AdminPage() {
@@ -13,35 +16,42 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<'users' | 'projects'>('projects')
   const [quoteInput, setQuoteInput] = useState<Record<string, string>>({})
   const [replyText, setReplyText] = useState<Record<string, string>>({})
+  const [showProjectModal, setShowProjectModal] = useState(false)
+  const [showUserModal, setShowUserModal] = useState(false)
+  const [editingUser, setEditingUser] = useState<User | null>(null)
 
   useEffect(() => {
     if (!loading && (!user || user.role !== 'admin')) {
       router.push('/')
       return
     }
-    setUsers(getUsers())
-    setProjects(getProjects())
+    async function load() {
+      const [u, p] = await Promise.all([getUsers(), getProjects()])
+      setUsers(u)
+      setProjects(p)
+    }
+    if (user?.role === 'admin') load()
   }, [user, loading, router])
 
   if (loading) return <div className="p-12 text-center text-steel-400">Loading...</div>
   if (!user || user.role !== 'admin') return null
 
-  const updateStatus = (project: Project, status: Project['status']) => {
+  const updateStatus = async (project: Project, status: Project['status']) => {
     const updated = { ...project, status }
-    saveProject(updated)
+    await saveProject(updated)
     setProjects(projects.map((p) => (p.id === project.id ? updated : p)))
   }
 
-  const setQuote = (project: Project) => {
+  const setQuote = async (project: Project) => {
     const val = parseFloat(quoteInput[project.id])
     if (isNaN(val)) return
     const updated = { ...project, quote: val, status: 'quoted' as const }
-    saveProject(updated)
+    await saveProject(updated)
     setProjects(projects.map((p) => (p.id === project.id ? updated : p)))
     setQuoteInput({ ...quoteInput, [project.id]: '' })
   }
 
-  const sendReply = (projectId: string) => {
+  const sendReply = async (projectId: string) => {
     const text = replyText[projectId]?.trim()
     if (!text) return
     const project = projects.find((p) => p.id === projectId)
@@ -54,7 +64,7 @@ export default function AdminPage() {
       createdAt: new Date().toISOString(),
     }
     const updated = { ...project, feedback: [...project.feedback, msg] }
-    saveProject(updated)
+    await saveProject(updated)
     setProjects(projects.map((p) => (p.id === projectId ? updated : p)))
     setReplyText({ ...replyText, [projectId]: '' })
   }
@@ -72,8 +82,38 @@ export default function AdminPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Admin Dashboard</h1>
-      <p className="text-steel-400 text-sm mb-6">Manage users, projects, and quotes.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-white">Admin Dashboard</h1>
+          <p className="text-steel-400 text-sm">Manage users, projects, and quotes.</p>
+        </div>
+        <button
+          onClick={() => setShowProjectModal(true)}
+          className="btn-primary text-sm py-2 px-4 self-start sm:self-auto"
+        >
+          + Add Project
+        </button>
+      </div>
+
+      <CreateProjectModal
+        isOpen={showProjectModal}
+        onClose={() => setShowProjectModal(false)}
+        onCreated={async () => {
+          setShowProjectModal(false)
+          setProjects(await getProjects())
+        }}
+      />
+
+      <ManageUserModal
+        isOpen={showUserModal}
+        onClose={() => { setShowUserModal(false); setEditingUser(null) }}
+        onSaved={async () => {
+          setShowUserModal(false)
+          setEditingUser(null)
+          setUsers(await getUsers())
+        }}
+        user={editingUser}
+      />
 
       <div className="flex space-x-2 mb-6">
         {(['projects', 'users'] as const).map((tab) => (
@@ -90,31 +130,50 @@ export default function AdminPage() {
       </div>
 
       {activeTab === 'users' && (
-        <div className="card overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-steel-400 border-b border-steel-700">
-                <th className="pb-2 pr-4">Name</th>
-                <th className="pb-2 pr-4">Email</th>
-                <th className="pb-2 pr-4">Role</th>
-                <th className="pb-2">Joined</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((u) => (
-                <tr key={u.id} className="border-b border-steel-800">
-                  <td className="py-3 pr-4 text-white">{u.name}</td>
-                  <td className="py-3 pr-4 text-steel-300">{u.email}</td>
-                  <td className="py-3 pr-4">
-                    <span className="text-xs bg-steel-800 text-steel-300 px-2 py-1 rounded capitalize">
-                      {u.role}
-                    </span>
-                  </td>
-                  <td className="py-3 text-steel-400">{new Date(u.createdAt).toLocaleDateString()}</td>
+        <div>
+          <div className="flex justify-end mb-4">
+            <button
+              onClick={() => { setEditingUser(null); setShowUserModal(true) }}
+              className="btn-primary text-sm py-2 px-4"
+            >
+              + Add User
+            </button>
+          </div>
+          <div className="card overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-steel-400 border-b border-steel-700">
+                  <th className="pb-2 pr-4">Name</th>
+                  <th className="pb-2 pr-4">Email</th>
+                  <th className="pb-2 pr-4">Role</th>
+                  <th className="pb-2 pr-4">Joined</th>
+                  <th className="pb-2 text-right">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {users.map((u) => (
+                  <tr key={u.id} className="border-b border-steel-800">
+                    <td className="py-3 pr-4 text-white">{u.name}</td>
+                    <td className="py-3 pr-4 text-steel-300">{u.email}</td>
+                    <td className="py-3 pr-4">
+                      <span className="text-xs bg-steel-800 text-steel-300 px-2 py-1 rounded capitalize">
+                        {u.role}
+                      </span>
+                    </td>
+                    <td className="py-3 pr-4 text-steel-400">{new Date(u.createdAt).toLocaleDateString()}</td>
+                    <td className="py-3 text-right">
+                      <button
+                        onClick={() => { setEditingUser(u); setShowUserModal(true) }}
+                        className="text-xs text-chilliblue-400 hover:text-chilliblue-300 transition-colors"
+                      >
+                        Edit
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -131,7 +190,7 @@ export default function AdminPage() {
                 <div>
                   <h2 className="text-lg font-bold text-white">{project.title}</h2>
                   <p className="text-steel-400 text-xs">
-                    {project.userName} ({project.userEmail}) — {new Date(project.createdAt).toLocaleDateString()}
+                    {project.userName}{project.userEmail && project.userEmail !== '(no email)' ? ` (${project.userEmail})` : ''} — {new Date(project.createdAt).toLocaleDateString()}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -167,7 +226,7 @@ export default function AdminPage() {
                 ))}
               </div>
 
-              <div className="flex gap-2 mb-4">
+              <div className="flex flex-wrap gap-2 mb-4">
                 <input
                   type="number"
                   className="input text-sm w-40"
@@ -179,7 +238,19 @@ export default function AdminPage() {
                   Set Quote
                 </button>
                 <button
-                  onClick={() => { deleteProject(project.id); setProjects(getProjects()) }}
+                  onClick={() => {
+                    const msg = formatWhatsAppMessage(project)
+                    openWhatsApp(GREG_WHATSAPP, msg)
+                  }}
+                  className="text-sm bg-green-900/50 hover:bg-green-800 text-green-200 px-3 py-1.5 rounded transition-colors flex items-center gap-1.5"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                  </svg>
+                  Send to Greg
+                </button>
+                <button
+                  onClick={async () => { await deleteProject(project.id); setProjects(await getProjects()) }}
                   className="text-sm bg-red-900/50 hover:bg-red-800 text-red-200 px-3 py-1.5 rounded transition-colors ml-auto"
                 >
                   Delete

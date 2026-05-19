@@ -50,6 +50,9 @@ export default function Navbar() {
             <Link href="/catalog" className="text-chilliblue-200 hover:text-white transition-colors">
               Catalog
             </Link>
+            <Link href="/plan" className="text-chilliblue-200 hover:text-white transition-colors">
+              Get a Quote
+            </Link>
             {roleLinks()}
           </div>
 
@@ -64,14 +67,9 @@ export default function Navbar() {
                 </button>
               </div>
             ) : (
-              <div className="flex items-center space-x-3">
-                <Link href="/login" className="text-chilliblue-200 hover:text-white transition-colors text-sm">
-                  Log In
-                </Link>
-                <Link href="/register" className="btn-primary text-sm py-1.5 px-4">
-                  Sign Up
-                </Link>
-              </div>
+              <Link href="/login" className="btn-primary text-sm py-1.5 px-4">
+                Log In
+              </Link>
             )}
           </div>
         </div>
@@ -81,6 +79,7 @@ export default function Navbar() {
       <div className="md:hidden border-t border-chilliblue-800 px-4 py-2 flex space-x-4 overflow-x-auto">
         <Link href="/" className="text-sm text-chilliblue-200 whitespace-nowrap">Home</Link>
         <Link href="/catalog" className="text-sm text-chilliblue-200 whitespace-nowrap">Catalog</Link>
+        <Link href="/plan" className="text-sm text-chilliblue-200 whitespace-nowrap">Get a Quote</Link>
         {user?.role === 'client' && (
           <>
             <Link href="/storyboard" className="text-sm text-chilliblue-200 whitespace-nowrap">Storyboard</Link>

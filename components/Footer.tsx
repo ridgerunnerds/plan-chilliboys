@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 export default function Footer() {
   return (
     <footer className="border-t border-chilliblue-800 bg-chilliblue-900/80 mt-16">
@@ -25,8 +27,18 @@ export default function Footer() {
             </div>
           </div>
         </div>
-        <div className="border-t border-chilliblue-800 mt-6 pt-4 text-center text-steel-500 text-xs">
-          © 2025 Chilli Boys Manufacturing — All Rights Reserved.
+        <div className="border-t border-chilliblue-800 mt-6 pt-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <p className="text-steel-500 text-xs">
+            © 2025 Chilli Boys Manufacturing — All Rights Reserved.
+          </p>
+          <div className="flex items-center gap-4 text-xs">
+            <Link href="/privacy" className="text-steel-400 hover:text-chilliblue-300 transition-colors">
+              Privacy Policy
+            </Link>
+            <Link href="/terms" className="text-steel-400 hover:text-chilliblue-300 transition-colors">
+              Terms of Service
+            </Link>
+          </div>
         </div>
       </div>
     </footer>
