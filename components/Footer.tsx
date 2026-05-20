@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import BirdEasterEgg from './BirdEasterEgg'
 
 export default function Footer() {
   return (
@@ -29,14 +30,17 @@ export default function Footer() {
           </div>
         </div>
         <div className="border-t border-chilliblue-800 mt-6 pt-6 flex flex-col items-center gap-4">
-          <Image
-            src="/logo.png"
-            alt="Chilli Boys"
-            width={48}
-            height={40}
-            className="rounded opacity-80 hover:opacity-100 transition-opacity"
-            style={{ objectFit: 'contain' }}
-          />
+          <div className="flex items-center gap-3">
+            <Image
+              src="/logo.png"
+              alt="Chilli Boys"
+              width={48}
+              height={40}
+              className="rounded opacity-80 hover:opacity-100 transition-opacity"
+              style={{ objectFit: 'contain' }}
+            />
+            <BirdEasterEgg variant="inline" />
+          </div>
           <div className="flex flex-col sm:flex-row items-center justify-between gap-2 w-full">
             <p className="text-steel-500 text-xs">
               © 2025 Chilli Boys Manufacturing — All Rights Reserved.

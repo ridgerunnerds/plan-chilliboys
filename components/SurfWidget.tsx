@@ -59,7 +59,7 @@ export default function SurfWidget() {
       {/* Wave icon button */}
       <button
         onClick={() => setOpen(true)}
-        className="fixed top-3 left-3 z-[60] w-10 h-10 rounded-full bg-steel-800/80 border border-steel-600 hover:border-chilliblue-400 flex items-center justify-center transition-colors group"
+        className="fixed bottom-6 left-6 z-[60] w-10 h-10 rounded-full bg-steel-800/80 border border-steel-600 hover:border-chilliblue-400 flex items-center justify-center transition-colors group"
         aria-label="Surf conditions"
         title="Surf conditions"
       >

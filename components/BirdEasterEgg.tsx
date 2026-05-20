@@ -8,7 +8,21 @@ interface BirdResult {
   description: string
 }
 
-export default function BirdEasterEgg() {
+function HitchcockBird({ className = '' }: { className?: string }) {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className={className}
+    >
+      <path d="M22 8c-1.5.5-3 1.5-5 1.5-1.2 0-2.2-.3-3-.8-.5-.3-1-.2-1.3.2-.2.3-.2.7 0 1 .3.5.5 1 .5 1.5 0 1.5-1.5 3-3.5 3.5-.5.2-1 .3-1.5.3-1 0-2-.3-2.8-.8-.3-.2-.7-.1-.9.2-.2.3-.1.7.2.9 1 .7 2.2 1 3.5 1 .7 0 1.3-.1 2-.3 2.5-.7 4.5-2.8 4.5-5.2 0-.2 0-.3-.1-.5 1.2.3 2.5.2 3.8-.3.4-.1.6-.5.5-.9-.1-.3-.5-.5-.9-.4-.5.2-1 .2-1.5.1C17 7.5 19 6 21 5c.4-.2.5-.6.3-1-.2-.3-.6-.5-1-.3-1.5.8-3 2-4.5 3.2.5-.8 1-1.5 1.5-2.2.2-.3.1-.7-.2-1-.3-.2-.7-.1-1 .2-.7 1-1.5 2-2.2 3-.3.1-.7.2-1 .2-.5 0-1-.1-1.5-.3-1-.3-2-.2-2.8.3-.8.5-1.3 1.3-1.5 2.2-.1.4.1.8.5.9.4.1.8-.1.9-.5.1-.5.5-1 1-1.3.5-.3 1.2-.3 1.8-.1.5.2 1 .3 1.5.3.3 0 .7 0 1-.1-.5.5-.8 1.2-.8 2 0 .3.2.5.5.5.3 0 .5-.2.5-.5 0-.8.5-1.5 1.2-1.8.2-.1.3-.2.5-.2z" />
+    </svg>
+  )
+}
+
+export default function BirdEasterEgg({ variant = 'floating' }: { variant?: 'floating' | 'inline' }) {
   const [open, setOpen] = useState(false)
   const [stream, setStream] = useState<MediaStream | null>(null)
   const [captured, setCaptured] = useState<string | null>(null)
@@ -160,23 +174,26 @@ export default function BirdEasterEgg() {
 
   return (
     <>
-      {/* Floating bird button */}
-      <button
-        onClick={() => setOpen(true)}
-        className="fixed bottom-6 right-6 z-40 w-12 h-12 rounded-full bg-chilliblue-800/80 border border-chilliblue-600/50 backdrop-blur-sm flex items-center justify-center hover:bg-chilliblue-700 hover:scale-110 transition-all shadow-lg group"
-        aria-label="Bird identifier easter egg"
-        title="Bird ID"
-      >
-        <svg
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="currentColor"
-          className="text-white/80 group-hover:text-white transition-colors"
+      {/* Bird trigger */}
+      {variant === 'floating' ? (
+        <button
+          onClick={() => setOpen(true)}
+          className="fixed bottom-6 right-6 z-40 w-12 h-12 rounded-full bg-chilliblue-800/80 border border-chilliblue-600/50 backdrop-blur-sm flex items-center justify-center hover:bg-chilliblue-700 hover:scale-110 transition-all shadow-lg group"
+          aria-label="Bird identifier easter egg"
+          title="Bird ID"
         >
-          <path d="M20.5 11c-.8-2.3-2.9-4-5.5-4-.6 0-1.2.1-1.7.3C12.4 5.1 10.3 4 8 4 4.7 4 2 6.7 2 10c0 .3 0 .7.1 1C.8 12 .2 13.4.8 14.6c.5 1.1 1.7 1.6 2.8 1.3.7 1.4 2.2 2.3 3.9 2.3 1.4 0 2.7-.6 3.5-1.6.4.1.8.1 1.2.1 2.8 0 5.2-1.7 6.2-4.1.4.1.9.2 1.4.2 1.9 0 3.5-1.6 3.5-3.5S22.4 11 20.5 11z" />
-        </svg>
-      </button>
+          <HitchcockBird />
+        </button>
+      ) : (
+        <button
+          onClick={() => setOpen(true)}
+          className="text-steel-500 hover:text-white transition-colors"
+          aria-label="Bird identifier easter egg"
+          title="Bird ID"
+        >
+          <HitchcockBird />
+        </button>
+      )}
 
       {/* Modal */}
       {open && (
