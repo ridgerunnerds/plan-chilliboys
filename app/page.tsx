@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { categories, concepts, textures } from '@/lib/data'
 
 /* ─── Blueprint SVG decorations ─── */
@@ -308,6 +309,69 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Location */}
+        <section className="py-12">
+          <h2 className="text-2xl md:text-3xl font-bold text-white mb-8 text-center">
+            Visit Our Shop
+          </h2>
+          <div className="card overflow-hidden border-chilliblue-700">
+            <div className="relative w-full aspect-[16/10] bg-[#1a3a5f]">
+              <Image
+                src="/map-poster-wide.png"
+                alt="Map of El Pescadero, Baja California Sur — Chilli Boys Manufacturing location"
+                fill
+                className="object-cover object-center"
+                sizes="(max-width: 1280px) 100vw, 1280px"
+                priority
+              />
+            </div>
+            <div className="p-6 md:p-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <h3 className="text-sm font-bold text-chilliblue-300 uppercase tracking-wider mb-2">
+                  Address
+                </h3>
+                <p className="text-steel-300 text-sm leading-relaxed">
+                  KM 65 Highway 1<br />
+                  El Pescadero<br />
+                  Baja California Sur, 23300<br />
+                  Mexico
+                </p>
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-chilliblue-300 uppercase tracking-wider mb-2">
+                  Coordinates
+                </h3>
+                <p className="text-steel-300 text-sm font-mono leading-relaxed">
+                  23.3700° N<br />
+                  110.1700° W
+                </p>
+              </div>
+              <div className="flex flex-col justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-chilliblue-300 uppercase tracking-wider mb-2">
+                    Contact
+                  </h3>
+                  <p className="text-steel-300 text-sm">
+                    WhatsApp: +52 1 612 105 2006
+                  </p>
+                </div>
+                <a
+                  href="https://www.google.com/maps/search/?api=1&query=23.37,-110.17"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-4 md:mt-0 inline-flex items-center justify-center gap-2 btn-secondary text-sm px-4 py-2 w-full md:w-auto"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  Get Directions
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* CTA */}
         <section className="py-16 text-center">
           <div className="card max-w-3xl mx-auto border-chilliblue-700">
@@ -321,9 +385,6 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link href="/plan" className="btn-primary text-lg px-8 py-3 inline-block">
                 Get a Quote
-              </Link>
-              <Link href="/register" className="btn-secondary text-lg px-8 py-3 inline-block">
-                Create Account
               </Link>
             </div>
           </div>
