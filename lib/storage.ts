@@ -229,12 +229,17 @@ export async function saveUser(user: User): Promise<void> {
   if (user.password && user.password.length > 0) {
     // Creating a new user with a password — use raw Auth API so we don't
     // mess with the current session.
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    const url = 'https://havxhrpvkmqknsmehiqo.supabase.co'
+    const key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhhdnhocnB2a21xa25zbWVoaXFvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyMDgzMTgsImV4cCI6MjA5NDc4NDMxOH0.FzzBarHZwk11YICVjceM8M8KDROhuZ9SkTT2jIdZRpw'
 
     const res = await fetch(`${url}/auth/v1/signup`, {
       method: 'POST',
-      headers: { apikey: key, 'Content-Type': 'application/json' },
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        'Content-Type': 'application/json',
+      },
+      credentials: 'omit',
       body: JSON.stringify({
         email: user.email,
         password: user.password,
@@ -244,7 +249,7 @@ export async function saveUser(user: User): Promise<void> {
 
     const authData = await res.json()
     if (!res.ok) {
-      throw new Error(authData.msg || authData.error_description || 'Failed to create user')
+      throw new Error(authData.msg || authData.error_description || authData.message || `Auth error ${res.status}`)
     }
 
     const authUserId = authData.id || authData.user?.id
@@ -346,32 +351,37 @@ export async function saveStoryboard(storyboard: Storyboard): Promise<void> {
 
 /* ─── Seed demo accounts ─── */
 export async function seedDemoData(): Promise<void> {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  const url = 'https://havxhrpvkmqknsmehiqo.supabase.co'
+  const key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhhdnhocnB2a21xa25zbWVoaXFvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyMDgzMTgsImV4cCI6MjA5NDc4NDMxOH0.FzzBarHZwk11YICVjceM8M8KDROhuZ9SkTT2jIdZRpw'
 
   async function ensureDemoUser(email: string, password: string, name: string, role: string) {
+    // Check if user already exists in profiles
+    const { data: existing } = await supabase.from('profiles').select('id').eq('email', email).limit(1)
+    if (existing && existing.length > 0) return
+
     try {
       const res = await fetch(`${url}/auth/v1/signup`, {
         method: 'POST',
-        headers: { apikey: key, 'Content-Type': 'application/json' },
+        headers: {
+          apikey: key,
+          Authorization: `Bearer ${key}`,
+          'Content-Type': 'application/json',
+        },
+        credentials: 'omit',
         body: JSON.stringify({ email, password, data: { name, role } }),
       })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        console.log('seedDemoData: signup skipped for', email, '-', err.msg || err.message || res.status)
+        return
+      }
       const authData = await res.json()
       const authId = authData.id || authData.user?.id
       if (authId) {
-        try {
-          await supabase.from('profiles').upsert({
-            id: authId,
-            email,
-            name,
-            role,
-          })
-        } catch {
-          // ignore
-        }
+        await supabase.from('profiles').upsert({ id: authId, email, name, role })
       }
-    } catch {
-      // likely already exists
+    } catch (e: any) {
+      console.log('seedDemoData: error for', email, '-', e.message)
     }
   }
 
