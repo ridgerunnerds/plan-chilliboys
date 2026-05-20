@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { Storyboard, StoryboardElement, saveStoryboard } from '@/lib/storage'
-import { categories } from '@/lib/data'
+import { categories, concepts, textures } from '@/lib/data'
 
 interface Props {
   storyboard: Storyboard
@@ -51,8 +51,11 @@ export default function StoryboardCanvas({ storyboard, onChange, readOnly }: Pro
 
   /* Selection & tool */
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [tool, setTool] = useState<'select' | 'text' | 'title' | 'shape' | 'note' | 'image' | 'upload' | 'ai'>('select')
+  const [tool, setTool] = useState<'select' | 'text' | 'title' | 'shape' | 'note' | 'image' | 'upload' | 'ai' | 'service' | 'concept' | 'swatch'>('select')
   const [showGallery, setShowGallery] = useState(false)
+  const [showServicePicker, setShowServicePicker] = useState(false)
+  const [showConceptPicker, setShowConceptPicker] = useState(false)
+  const [showSwatchPicker, setShowSwatchPicker] = useState(false)
   const [aiPrompt, setAiPrompt] = useState('')
 
   /* Dragging items */
@@ -98,6 +101,7 @@ export default function StoryboardCanvas({ storyboard, onChange, readOnly }: Pro
     fillOpacity?: number
     borderColor?: string
     borderWidth?: number
+    data?: StoryboardElement['data']
   }
   const addElement = (el: CreateElement) => {
     const canvasW = canvasRef.current?.clientWidth || 800
@@ -114,6 +118,9 @@ export default function StoryboardCanvas({ storyboard, onChange, readOnly }: Pro
       image: { width: 180, height: 120, content: '' },
       upload: { width: 180, height: 120, content: '' },
       ai: { width: 180, height: 120, content: '', prompt: '', promptHistory: [], images: [], currentImageIndex: 0 },
+      service: { width: 220, height: 160, content: '' },
+      concept: { width: 220, height: 140, content: '' },
+      swatch: { width: 140, height: 100, content: '' },
     }
 
     const elType = el.type as string
@@ -316,6 +323,9 @@ export default function StoryboardCanvas({ storyboard, onChange, readOnly }: Pro
                 { key: 'image', label: 'Gallery' },
                 { key: 'upload', label: 'Upload' },
                 { key: 'ai', label: 'AI Image' },
+                { key: 'service', label: 'Service' },
+                { key: 'concept', label: 'Concept' },
+                { key: 'swatch', label: 'Swatch' },
               ].map((t) => (
                 <button
                   key={t.key}
@@ -328,6 +338,9 @@ export default function StoryboardCanvas({ storyboard, onChange, readOnly }: Pro
                     if (t.key === 'image') setShowGallery(true)
                     if (t.key === 'upload') fileInputRef.current?.click()
                     if (t.key === 'ai') addElement({ type: 'ai' })
+                    if (t.key === 'service') setShowServicePicker(true)
+                    if (t.key === 'concept') setShowConceptPicker(true)
+                    if (t.key === 'swatch') setShowSwatchPicker(true)
                   }}
                   className={`px-2 py-2 rounded text-xs font-medium transition-colors ${
                     tool === t.key
@@ -347,7 +360,7 @@ export default function StoryboardCanvas({ storyboard, onChange, readOnly }: Pro
               <h3 className="font-bold text-white mb-3">Properties</h3>
               <div className="space-y-3">
                 {/* Content */}
-                {(selectedEl.type === 'text' || selectedEl.type === 'title' || selectedEl.type === 'note') && (
+                {(selectedEl.type === 'text' || selectedEl.type === 'title' || selectedEl.type === 'note') && !['service','concept','swatch'].includes(selectedEl.type) && (
                   <div>
                     <label className="text-xs text-steel-400">Content</label>
                     <textarea
@@ -528,6 +541,17 @@ export default function StoryboardCanvas({ storyboard, onChange, readOnly }: Pro
                   </div>
                 )}
 
+                {/* Catalog item info */}
+                {(selectedEl.type === 'service' || selectedEl.type === 'concept' || selectedEl.type === 'swatch') && (
+                  <div className="border-t border-steel-700 pt-3">
+                    <label className="text-xs text-steel-400">Catalog Item</label>
+                    <p className="text-sm text-white font-medium mt-1">{selectedEl.data?.name || selectedEl.data?.title}</p>
+                    {selectedEl.data?.description && (
+                      <p className="text-xs text-steel-400 mt-1">{selectedEl.data.description}</p>
+                    )}
+                  </div>
+                )}
+
                 <button
                   onClick={deleteSelected}
                   className="w-full bg-red-900/60 hover:bg-red-800 text-red-200 py-1.5 rounded text-sm transition-colors"
@@ -577,7 +601,8 @@ export default function StoryboardCanvas({ storyboard, onChange, readOnly }: Pro
             <h3 className="font-bold text-white mb-2">Instructions</h3>
             <p className="text-xs text-steel-400 leading-relaxed">
               Scroll to zoom. Drag empty canvas to pan. Drag items to move.
-              Select an element to edit. Press Delete to remove.
+              Use Service, Concept, and Swatch tools to add catalog items.
+              Press Delete to remove selected elements.
             </p>
           </div>
         </div>
@@ -674,6 +699,53 @@ export default function StoryboardCanvas({ storyboard, onChange, readOnly }: Pro
                     {el.content}
                   </div>
                 )}
+                {el.type === 'service' && (
+                  <div className="w-full h-full bg-steel-800 border border-steel-600 rounded overflow-hidden flex flex-col">
+                    {el.data?.image && (
+                      <img src={el.data.image} alt="" className="w-full h-16 object-cover" draggable={false} />
+                    )}
+                    <div className="p-2 flex-1 overflow-hidden">
+                      <p className="text-xs font-bold text-white truncate">{el.data?.name}</p>
+                      <p className="text-[10px] text-steel-400 line-clamp-2 mt-0.5">{el.data?.description}</p>
+                      {el.data?.materials && (
+                        <div className="flex flex-wrap gap-0.5 mt-1">
+                          {el.data.materials.slice(0, 2).map((m) => (
+                            <span key={m} className="text-[9px] bg-steel-700 text-steel-300 px-1 rounded">{m}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {el.type === 'concept' && (
+                  <div className="w-full h-full bg-steel-800 border border-chilliblue-700/50 rounded p-2 overflow-hidden flex flex-col">
+                    <p className="text-xs font-bold text-chilliblue-300">{el.data?.title}</p>
+                    <p className="text-[10px] text-steel-400 mt-1 line-clamp-3">{el.data?.description}</p>
+                    {el.data?.tags && (
+                      <div className="flex flex-wrap gap-0.5 mt-auto pt-1">
+                        {el.data.tags.map((t) => (
+                          <span key={t} className="text-[9px] bg-chilliblue-900 text-chilliblue-300 px-1 rounded">#{t}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+                {el.type === 'swatch' && (
+                  <div className="w-full h-full rounded overflow-hidden border border-steel-600 flex flex-col">
+                    <div
+                      className="flex-1"
+                      style={{
+                        backgroundColor: el.data?.color || '#888',
+                        backgroundImage: el.data?.image ? `url(${el.data.image})` : undefined,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                      }}
+                    />
+                    <div className="bg-steel-800 px-2 py-1">
+                      <p className="text-[10px] text-white truncate">{el.data?.name}</p>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -719,6 +791,148 @@ export default function StoryboardCanvas({ storyboard, onChange, readOnly }: Pro
                   className="rounded-lg overflow-hidden border border-steel-700 hover:border-chilliblue-400 transition-colors"
                 >
                   <img src={img} alt="" className="w-full h-24 object-cover" />
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Service Picker Modal */}
+      {showServicePicker && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+          <div className="bg-steel-900 border border-steel-700 rounded-xl max-w-4xl w-full max-h-[80vh] overflow-auto p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-white">Select a Service</h3>
+              <button
+                onClick={() => setShowServicePicker(false)}
+                className="text-steel-400 hover:text-white text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {categories.map((cat) => (
+                <button
+                  key={cat.slug}
+                  onClick={() => {
+                    addElement({
+                      type: 'service',
+                      content: cat.name,
+                      data: {
+                        name: cat.name,
+                        description: cat.description,
+                        image: cat.images[0],
+                        materials: cat.materials,
+                      },
+                    })
+                    setShowServicePicker(false)
+                    setTool('select')
+                  }}
+                  className="text-left bg-steel-800 border border-steel-700 hover:border-chilliblue-400 rounded-lg p-3 transition-colors"
+                >
+                  {cat.images[0] && (
+                    <img src={cat.images[0]} alt="" className="w-full h-24 object-cover rounded mb-2" />
+                  )}
+                  <p className="text-sm font-bold text-white">{cat.name}</p>
+                  <p className="text-xs text-steel-400 line-clamp-2 mt-1">{cat.description}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Concept Picker Modal */}
+      {showConceptPicker && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+          <div className="bg-steel-900 border border-steel-700 rounded-xl max-w-2xl w-full max-h-[80vh] overflow-auto p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-white">Select a Design Concept</h3>
+              <button
+                onClick={() => setShowConceptPicker(false)}
+                className="text-steel-400 hover:text-white text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            <div className="space-y-3">
+              {concepts.map((c) => (
+                <button
+                  key={c.title}
+                  onClick={() => {
+                    addElement({
+                      type: 'concept',
+                      content: c.title,
+                      data: {
+                        title: c.title,
+                        description: c.description,
+                        tags: c.tags,
+                      },
+                    })
+                    setShowConceptPicker(false)
+                    setTool('select')
+                  }}
+                  className="text-left w-full bg-steel-800 border border-steel-700 hover:border-chilliblue-400 rounded-lg p-3 transition-colors"
+                >
+                  <p className="text-sm font-bold text-chilliblue-300">{c.title}</p>
+                  <p className="text-xs text-steel-400 mt-1">{c.description}</p>
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {c.tags.map((t) => (
+                      <span key={t} className="text-xs bg-chilliblue-900 text-chilliblue-300 px-2 py-0.5 rounded">#{t}</span>
+                    ))}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Swatch Picker Modal */}
+      {showSwatchPicker && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+          <div className="bg-steel-900 border border-steel-700 rounded-xl max-w-3xl w-full max-h-[80vh] overflow-auto p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-white">Select a Texture / Finish</h3>
+              <button
+                onClick={() => setShowSwatchPicker(false)}
+                className="text-steel-400 hover:text-white text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+              {textures.map((t) => (
+                <button
+                  key={t.name}
+                  onClick={() => {
+                    addElement({
+                      type: 'swatch',
+                      content: t.name,
+                      data: {
+                        name: t.name,
+                        color: t.color,
+                        image: t.image,
+                      },
+                    })
+                    setShowSwatchPicker(false)
+                    setTool('select')
+                  }}
+                  className="text-left bg-steel-800 border border-steel-700 hover:border-chilliblue-400 rounded-lg overflow-hidden transition-colors"
+                >
+                  <div
+                    className="w-full h-20"
+                    style={{
+                      backgroundColor: t.color,
+                      backgroundImage: `url(${t.image})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                    }}
+                  />
+                  <div className="p-2">
+                    <p className="text-xs text-white truncate">{t.name}</p>
+                  </div>
                 </button>
               ))}
             </div>

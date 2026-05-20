@@ -24,7 +24,7 @@ export interface ImageRevision {
 
 export interface StoryboardElement {
   id: string
-  type: 'text' | 'shape' | 'image' | 'note' | 'title' | 'upload'
+  type: 'text' | 'shape' | 'image' | 'note' | 'title' | 'upload' | 'service' | 'concept' | 'swatch'
   x: number
   y: number
   width?: number
@@ -41,6 +41,16 @@ export interface StoryboardElement {
   images?: ImageRevision[]
   currentImageIndex?: number
   isGenerating?: boolean
+  /* Catalog data (for service, concept, swatch types) */
+  data?: {
+    name?: string
+    title?: string
+    description?: string
+    image?: string
+    color?: string
+    materials?: string[]
+    tags?: string[]
+  }
 }
 
 export interface User {
