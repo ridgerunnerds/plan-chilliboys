@@ -26,6 +26,7 @@ const LAT = 23.3147
 const LON = -110.1719
 const LOCATION_ID = 'cerritos-beach'
 const CACHE_MS = 60 * 60 * 1000 // 1 hour
+const WORLDTIDES_KEY = process.env.WORLDTIDES_API_KEY || ''
 
 /* ─── Moon Phase Calculation ─── */
 function getMoonPhase(date: Date): number {
@@ -45,6 +46,41 @@ function getMoonPhase(date: Date): number {
   jd -= b
   b = Math.round(jd * 8)
   return b / 8
+}
+
+function isSameDate(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  )
+}
+
+/* ─── Tide Data from WorldTides (mornings only to save API credits) ─── */
+async function fetchWorldTides(): Promise<number | null> {
+  if (!WORLDTIDES_KEY) return null
+
+  const res = await fetch(
+    `https://www.worldtides.info/api/v3?heights&date=today&days=1&lat=${LAT}&lon=${LON}&key=${WORLDTIDES_KEY}`
+  )
+  if (!res.ok) throw new Error(`WorldTides API error: ${res.status}`)
+
+  const data = await res.json()
+  const heights: Array<{ dt: number; height: number }> = data.heights || []
+  if (heights.length === 0) return null
+
+  const now = Math.floor(Date.now() / 1000)
+  // Find the height entry closest to current time
+  let closest = heights[0]
+  let minDiff = Math.abs(heights[0].dt - now)
+  for (const h of heights) {
+    const diff = Math.abs(h.dt - now)
+    if (diff < minDiff) {
+      minDiff = diff
+      closest = h
+    }
+  }
+  return closest.height
 }
 
 function moonPhaseName(phase: number): string {
@@ -125,9 +161,6 @@ async function fetchMarineData(): Promise<Partial<SurfConditions>> {
     wave_period: mHourly.wave_period?.[currentHour] ?? null,
     wave_direction: mHourly.wave_direction?.[currentHour] ?? null,
     sea_temp: mHourly.sea_surface_temperature?.[currentHour] ?? null,
-    // Note: tide data requires a paid/free-tier tide API (e.g. WorldTides).
-    // Open-Meteo does not provide tide predictions. To enable tides,
-    // integrate a tide API and populate this field.
     tide_height: null,
     air_temp: wHourly.temperature_2m?.[currentHour] ?? null,
     humidity: wHourly.relative_humidity_2m?.[currentHour] ?? null,
@@ -163,6 +196,33 @@ export async function fetchAndCacheSurfConditions(): Promise<SurfConditions> {
   const marineData = await fetchMarineData()
   const moonPhase = getMoonPhase(new Date())
 
+  /* ─── Tide data: preserve today's cache, fetch fresh in morning only ─── */
+  let tideHeight: number | null = null
+  try {
+    const { data: existing } = await supabase
+      .from('surf_conditions')
+      .select('tide_height, fetched_at')
+      .eq('id', LOCATION_ID)
+      .limit(1)
+
+    const existingRow = existing?.[0]
+    const hasTideToday =
+      existingRow?.tide_height != null &&
+      existingRow.fetched_at &&
+      isSameDate(new Date(existingRow.fetched_at), new Date())
+
+    if (hasTideToday) {
+      tideHeight = existingRow.tide_height
+    } else {
+      const hour = new Date().getHours()
+      if (hour >= 5 && hour <= 11) {
+        tideHeight = await fetchWorldTides()
+      }
+    }
+  } catch (err) {
+    console.error('Tide cache/read error:', err)
+  }
+
   const conditions: SurfConditions = {
     id: LOCATION_ID,
     fetched_at: new Date().toISOString(),
@@ -170,7 +230,7 @@ export async function fetchAndCacheSurfConditions(): Promise<SurfConditions> {
     wave_period: marineData.wave_period ?? null,
     wave_direction: marineData.wave_direction ?? null,
     sea_temp: marineData.sea_temp ?? null,
-    tide_height: marineData.tide_height ?? null,
+    tide_height: tideHeight,
     air_temp: marineData.air_temp ?? null,
     humidity: marineData.humidity ?? null,
     wind_speed: marineData.wind_speed ?? null,

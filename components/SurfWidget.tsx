@@ -152,11 +152,9 @@ export default function SurfWidget({ variant = 'floating' }: { variant?: 'floati
                       <p className="text-xs text-steel-400">Surface</p>
                     </div>
                     <div className="bg-steel-800/50 rounded-lg p-3">
-                      <p className="text-[10px] text-steel-500 uppercase tracking-wider">Conditions</p>
-                      <p className="text-sm font-bold text-white">{weatherDescription(data.weather_code)}</p>
-                      <p className={`text-xs font-bold mt-1 uppercase tracking-wider ${ratingColor(data.surf_rating)}`}>
-                        {data.surf_rating}
-                      </p>
+                      <p className="text-[10px] text-steel-500 uppercase tracking-wider">Tide</p>
+                      <p className="text-lg font-bold text-white">{data.tide_height?.toFixed(2) ?? '--'}m</p>
+                      <p className="text-xs text-steel-400">Above MSL</p>
                     </div>
                   </div>
 
