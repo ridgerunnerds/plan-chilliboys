@@ -46,6 +46,12 @@ export default function Footer() {
               © 2025 Chilli Boys Manufacturing — All Rights Reserved.
             </p>
             <div className="flex items-center gap-4 text-xs">
+              <a href="https://chilliboys.mx" target="_blank" rel="noopener noreferrer" className="text-steel-400 hover:text-chilliblue-300 transition-colors">
+                chilliboys.mx
+              </a>
+              <a href="https://www.facebook.com/GregC19" target="_blank" rel="noopener noreferrer" className="text-steel-400 hover:text-chilliblue-300 transition-colors">
+                Facebook
+              </a>
               <Link href="/privacy" className="text-steel-400 hover:text-chilliblue-300 transition-colors">
                 Privacy Policy
               </Link>
