@@ -5,6 +5,18 @@ import Link from 'next/link'
 import { categories, concepts, textures } from '@/lib/data'
 import BirdEasterEgg from '@/components/BirdEasterEgg'
 
+function getTextureGradient(name: string): string {
+  const gradients: Record<string, string> = {
+    'Hammered Copper': `repeating-radial-gradient(circle at 30% 30%, rgba(255,255,255,0.15) 0px, transparent 2px, rgba(0,0,0,0.1) 4px, transparent 6px), radial-gradient(circle at 70% 70%, #d4956a 0%, #b87333 40%, #8a5a2b 100%)`,
+    'Rusty Patina': `radial-gradient(circle at 20% 30%, #a0522d 0%, transparent 40%), radial-gradient(circle at 80% 70%, #cd853f 0%, transparent 35%), radial-gradient(circle at 50% 50%, #8b4513 0%, #654321 100%)`,
+    'Matte Black Steel': `linear-gradient(145deg, #2a2a2a 0%, #1a1a1a 50%, #0f0f0f 100%)`,
+    'Brushed Aluminum': `repeating-linear-gradient(90deg, #b8b8b8 0px, #d0d0d0 2px, #e8e8e8 4px, #c0c0c0 6px, #b8b8b8 8px)`,
+    'Natural Wood': `repeating-linear-gradient(0deg, #c4956a 0px, #b07850 4px, #c4956a 8px, #8b5a2b 12px, #c4956a 16px)`,
+    'Wrought Iron': `repeating-linear-gradient(135deg, #3a3a3a 0px, #2f2f2f 2px, #3a3a3a 4px, #252525 6px, #3a3a3a 8px)`,
+  }
+  return gradients[name] || `linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%, rgba(0,0,0,0.2) 100%)`
+}
+
 /* ─── Blueprint SVG decorations ─── */
 function BlueprintDecorations() {
   return (
@@ -243,8 +255,13 @@ export default function Home() {
             {textures.map((t) => (
               <div key={t.name} className="card p-4 text-center hover:border-chilliblue-500 transition-colors">
                 <div
-                  className="w-full h-20 rounded-lg mb-3 border border-steel-600"
-                  style={{ backgroundColor: t.color, backgroundImage: `url(${t.image})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+                  className="w-full h-28 rounded-lg mb-3 border border-steel-600 shadow-inner"
+                  style={{
+                    backgroundColor: t.color,
+                    backgroundImage: getTextureGradient(t.name),
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                  }}
                 />
                 <p className="text-sm font-medium text-white">{t.name}</p>
               </div>
