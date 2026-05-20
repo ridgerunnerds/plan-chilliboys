@@ -40,7 +40,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center space-x-2">
             <span className="text-xl font-bold text-white">Chilli Boys</span>
-            <span className="text-xs text-chilliblue-300 hidden sm:inline">Plan Portal</span>
+            <span className="text-xs text-chilliblue-300 hidden sm:inline">Manufacturing</span>
           </Link>
 
           <div className="hidden md:flex items-center space-x-6">
