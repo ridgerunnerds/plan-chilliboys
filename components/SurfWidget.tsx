@@ -13,7 +13,7 @@ import {
   moonPhaseName,
 } from '@/lib/surf'
 
-export default function SurfWidget() {
+export default function SurfWidget({ variant = 'floating' }: { variant?: 'floating' | 'inline' }) {
   const [open, setOpen] = useState(false)
   const [data, setData] = useState<SurfConditions | null>(null)
   const [loading, setLoading] = useState(false)
@@ -58,14 +58,25 @@ export default function SurfWidget() {
   return (
     <>
       {/* Wave icon button */}
-      <button
-        onClick={() => setOpen(true)}
-        className="fixed bottom-6 left-6 z-[60] w-10 h-10 rounded-full bg-steel-800/80 border border-steel-600 hover:border-chilliblue-400 flex items-center justify-center transition-colors group"
-        aria-label="Surf conditions"
-        title="Surf conditions"
-      >
-        <OrigamiWave className="w-5 h-5 text-chilliblue-300 group-hover:text-chilliblue-200 transition-colors" />
-      </button>
+      {variant === 'floating' ? (
+        <button
+          onClick={() => setOpen(true)}
+          className="fixed bottom-6 left-6 z-[60] w-10 h-10 rounded-full bg-steel-800/80 border border-steel-600 hover:border-chilliblue-400 flex items-center justify-center transition-colors group"
+          aria-label="Surf conditions"
+          title="Surf conditions"
+        >
+          <OrigamiWave className="w-5 h-5 text-chilliblue-300 group-hover:text-chilliblue-200 transition-colors" />
+        </button>
+      ) : (
+        <button
+          onClick={() => setOpen(true)}
+          className="text-chilliblue-300 hover:text-white transition-colors"
+          aria-label="Surf conditions"
+          title="Surf conditions"
+        >
+          <OrigamiWave className="w-6 h-6" />
+        </button>
+      )}
 
       {/* Digital display modal */}
       {open && (

@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import OrigamiWave from './OrigamiWave'
+import SurfWidget from './SurfWidget'
 import BirdEasterEgg from './BirdEasterEgg'
 
 export default function Footer() {
@@ -40,7 +40,7 @@ export default function Footer() {
               className="rounded opacity-80 hover:opacity-100 transition-opacity"
               style={{ objectFit: 'contain' }}
             />
-            <OrigamiWave className="w-6 h-6 text-chilliblue-300 opacity-80 hover:opacity-100 transition-opacity" />
+            <SurfWidget variant="inline" />
             <BirdEasterEgg variant="inline" />
           </div>
           <div className="flex flex-col sm:flex-row items-center justify-between gap-2 w-full">
