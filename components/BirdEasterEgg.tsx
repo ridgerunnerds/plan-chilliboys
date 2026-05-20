@@ -3,18 +3,45 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import Logo from './Logo'
 
-interface BirdResult {
+type Mode = 'bird' | 'car' | 'plant'
+
+interface IdentifyResult {
   name: string
   scientific: string
   description: string
 }
 
+const MODE_CONFIG: Record<Mode, { title: string; loading: string; prompt: string; error: string }> = {
+  bird: {
+    title: 'Bird Identifier',
+    loading: 'Identifying bird...',
+    prompt:
+      'Look at this photo and identify the bird species. Reply with just three lines:\n1. Common Name: [name]\n2. Scientific Name: [name]\n3. Brief Description: [1 sentence]\n\nIf no bird is visible, say "No bird detected" on the first line.',
+    error: 'Failed to identify bird. Please try again.',
+  },
+  car: {
+    title: 'Car Identifier',
+    loading: 'Identifying car...',
+    prompt:
+      'Look at this photo and identify the car. Reply with just three lines:\n1. Vehicle Name: [name]\n2. Make / Model: [name]\n3. Brief Description: [1 sentence]\n\nIf no car is visible, say "No car detected" on the first line.',
+    error: 'Failed to identify car. Please try again.',
+  },
+  plant: {
+    title: 'Plant Identifier',
+    loading: 'Identifying plant...',
+    prompt:
+      'Look at this photo and identify the plant. Reply with just three lines:\n1. Common Name: [name]\n2. Scientific Name: [name]\n3. Brief Description: [1 sentence]\n\nIf no plant is visible, say "No plant detected" on the first line.',
+    error: 'Failed to identify plant. Please try again.',
+  },
+}
+
 export default function BirdEasterEgg({ variant = 'floating' }: { variant?: 'floating' | 'inline' }) {
   const [open, setOpen] = useState(false)
+  const [mode, setMode] = useState<Mode>('bird')
   const [stream, setStream] = useState<MediaStream | null>(null)
   const [captured, setCaptured] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<BirdResult | null>(null)
+  const [result, setResult] = useState<IdentifyResult | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [zoom, setZoom] = useState(1)
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -81,12 +108,13 @@ export default function BirdEasterEgg({ variant = 'floating' }: { variant?: 'flo
     const dataUrl = canvas.toDataURL('image/jpeg', 0.85)
     setCaptured(dataUrl)
     stopCamera()
-    identifyBird(dataUrl)
-  }, [stream, zoom])
+    identifySubject(dataUrl)
+  }, [stream, zoom, mode])
 
-  const identifyBird = async (dataUrl: string) => {
+  const identifySubject = async (dataUrl: string) => {
     setLoading(true)
     setError(null)
+    const config = MODE_CONFIG[mode]
     try {
       const base64 = dataUrl.split(',')[1]
       const apiKey = 'sk_Xldaes8JEJe8lGKFrNYPm0tsJxeiXlV9'
@@ -105,7 +133,7 @@ export default function BirdEasterEgg({ variant = 'floating' }: { variant?: 'flo
               content: [
                 {
                   type: 'text',
-                  text: 'Look at this photo and identify the bird species. Reply with just three lines:\n1. Common Name: [name]\n2. Scientific Name: [name]\n3. Brief Description: [1 sentence]\n\nIf no bird is visible, say "No bird detected" on the first line.',
+                  text: config.prompt,
                 },
                 {
                   type: 'image_url',
@@ -133,9 +161,9 @@ export default function BirdEasterEgg({ variant = 'floating' }: { variant?: 'flo
 
       for (const line of lines) {
         const lower = line.toLowerCase()
-        if (lower.includes('common name:')) {
+        if (lower.includes('common name:') || lower.includes('vehicle name:')) {
           name = line.split(':').slice(1).join(':').trim()
-        } else if (lower.includes('scientific name:')) {
+        } else if (lower.includes('scientific name:') || lower.includes('make / model:') || lower.includes('make/model:')) {
           scientific = line.split(':').slice(1).join(':').trim()
         } else if (lower.includes('brief description:') || lower.includes('description:')) {
           description = line.split(':').slice(1).join(':').trim()
@@ -149,7 +177,7 @@ export default function BirdEasterEgg({ variant = 'floating' }: { variant?: 'flo
       }
     } catch (err: any) {
       console.error(err)
-      setError(err?.message || 'Failed to identify bird. Please try again.')
+      setError(err?.message || config.error)
     } finally {
       setLoading(false)
     }
@@ -161,6 +189,18 @@ export default function BirdEasterEgg({ variant = 'floating' }: { variant?: 'flo
     setError(null)
     setZoom(1)
     startCamera()
+  }
+
+  const switchMode = (newMode: Mode) => {
+    setMode(newMode)
+    setCaptured(null)
+    setResult(null)
+    setError(null)
+    setZoom(1)
+    if (stream) {
+      stopCamera()
+      setTimeout(() => startCamera(), 0)
+    }
   }
 
   const close = () => {
@@ -202,7 +242,7 @@ export default function BirdEasterEgg({ variant = 'floating' }: { variant?: 'flo
             <div className="flex items-center justify-between px-4 py-3 border-b border-chilliblue-800">
               <h3 className="text-white font-semibold flex items-center gap-2">
                 <Logo className="w-5 h-auto text-chilliblue-400" />
-                Bird Identifier
+                {MODE_CONFIG[mode].title}
               </h3>
               <button
                 onClick={close}
@@ -211,6 +251,23 @@ export default function BirdEasterEgg({ variant = 'floating' }: { variant?: 'flo
               >
                 ×
               </button>
+            </div>
+
+            {/* Mode tabs */}
+            <div className="flex border-b border-chilliblue-800">
+              {(['bird', 'car', 'plant'] as Mode[]).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => switchMode(m)}
+                  className={`flex-1 py-2 text-sm font-medium capitalize transition-colors ${
+                    mode === m
+                      ? 'text-white border-b-2 border-chilliblue-400 bg-chilliblue-800/40'
+                      : 'text-steel-400 hover:text-white hover:bg-chilliblue-800/20'
+                  }`}
+                >
+                  {m}
+                </button>
+              ))}
             </div>
 
             {/* Body */}
@@ -273,7 +330,7 @@ export default function BirdEasterEgg({ variant = 'floating' }: { variant?: 'flo
               {loading && (
                 <div className="flex flex-col items-center justify-center py-12 gap-3">
                   <div className="w-8 h-8 border-2 border-chilliblue-400 border-t-transparent rounded-full animate-spin" />
-                  <p className="text-chilliblue-200 text-sm">Identifying bird...</p>
+                  <p className="text-chilliblue-200 text-sm">{MODE_CONFIG[mode].loading}</p>
                 </div>
               )}
 
