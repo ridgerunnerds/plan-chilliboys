@@ -109,6 +109,12 @@ function BlueprintGrid() {
 function BlueprintGate({ onEnter }: { onEnter: () => void }) {
   const [pressed, setPressed] = useState(false)
 
+  const triggerEnter = useCallback(() => {
+    if (pressed) return
+    setPressed(true)
+    setTimeout(onEnter, 600)
+  }, [pressed, onEnter])
+
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Enter') {
@@ -117,13 +123,7 @@ function BlueprintGate({ onEnter }: { onEnter: () => void }) {
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [])
-
-  const triggerEnter = useCallback(() => {
-    if (pressed) return
-    setPressed(true)
-    setTimeout(onEnter, 600)
-  }, [pressed, onEnter])
+  }, [triggerEnter])
 
   return (
     <div

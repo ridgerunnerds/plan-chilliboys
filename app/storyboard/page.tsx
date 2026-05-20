@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/AuthProvider'
 import StoryboardCanvas from '@/components/StoryboardCanvas'
@@ -13,6 +13,7 @@ export default function StoryboardPage() {
   const [activeId, setActiveId] = useState<string | null>(null)
   const [newName, setNewName] = useState('')
   const [showNew, setShowNew] = useState(false)
+  const [error, setError] = useState('')
   const importRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -32,11 +33,16 @@ export default function StoryboardPage() {
     if (user) load()
   }, [user, loading, router, activeId])
 
+  const handleStoryboardChange = useCallback((s: Storyboard) => {
+    setStoryboards((prev) => prev.map((sb) => (sb.id === s.id ? s : sb)))
+  }, [])
+
   if (loading) return <div className="p-12 text-center text-steel-400">Loading...</div>
   if (!user) return null
 
   const createStoryboard = async () => {
     if (!newName.trim()) return
+    setError('')
     const sb: Storyboard = {
       id: `sb-${Date.now()}`,
       userId: user.id,
@@ -45,17 +51,22 @@ export default function StoryboardPage() {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }
-    await saveStoryboard(sb)
-    setStoryboards([...storyboards, sb])
-    setActiveId(sb.id)
-    setNewName('')
-    setShowNew(false)
+    try {
+      await saveStoryboard(sb)
+      setStoryboards((prev) => [...prev, sb])
+      setActiveId(sb.id)
+      setNewName('')
+      setShowNew(false)
+    } catch (err: any) {
+      setError(err?.message || 'Failed to create storyboard')
+    }
   }
 
   const active = storyboards.find((s) => s.id === activeId)
 
   const submitForQuote = async () => {
     if (!active) return
+    setError('')
     const project: Project = {
       id: `proj-${Date.now()}`,
       userId: user.id,
@@ -68,9 +79,13 @@ export default function StoryboardPage() {
       feedback: [],
       createdAt: new Date().toISOString(),
     }
-    await saveProject(project)
-    alert('Project submitted for quote! Check your dashboard for updates.')
-    router.push('/dashboard')
+    try {
+      await saveProject(project)
+      alert('Project submitted for quote! Check your dashboard for updates.')
+      router.push('/dashboard')
+    } catch (err: any) {
+      setError(err?.message || 'Failed to submit quote')
+    }
   }
 
   const exportStoryboard = () => {
@@ -93,6 +108,7 @@ export default function StoryboardPage() {
       const imported = JSON.parse(text)
       if (!imported.elements || !Array.isArray(imported.elements)) {
         alert('Invalid storyboard file')
+        e.target.value = ''
         return
       }
       const sb: Storyboard = {
@@ -104,7 +120,7 @@ export default function StoryboardPage() {
         updatedAt: new Date().toISOString(),
       }
       await saveStoryboard(sb)
-      setStoryboards([...storyboards, sb])
+      setStoryboards((prev) => [...prev, sb])
       setActiveId(sb.id)
     } catch (err) {
       console.error('Import failed:', err)
@@ -143,6 +159,12 @@ export default function StoryboardPage() {
           </button>
         </div>
       </div>
+
+      {error && (
+        <div className="bg-red-900/50 border border-red-700 text-red-200 px-4 py-2 rounded mb-4 text-sm" role="alert">
+          {error}
+        </div>
+      )}
 
       {showNew && (
         <div className="card mb-6">
@@ -186,9 +208,7 @@ export default function StoryboardPage() {
       {active ? (
         <StoryboardCanvas
           storyboard={active}
-          onChange={(s) => {
-            setStoryboards(storyboards.map((sb) => (sb.id === s.id ? s : sb)))
-          }}
+          onChange={handleStoryboardChange}
         />
       ) : (
         <div className="card text-center py-24">

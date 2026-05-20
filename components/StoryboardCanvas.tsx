@@ -14,15 +14,23 @@ interface Props {
 async function generatePollinationsImage(prompt: string, width = 1024, height = 576): Promise<string> {
   const seed = Math.floor(Math.random() * 1000000)
   const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&nologo=true&seed=${seed}&model=flux&enhance=true`
-  const res = await fetch(url)
-  if (!res.ok) throw new Error(`Pollinations error: ${res.status}`)
-  const blob = await res.blob()
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onloadend = () => resolve(reader.result as string)
-    reader.onerror = reject
-    reader.readAsDataURL(blob)
-  })
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 60000)
+  try {
+    const res = await fetch(url, { signal: controller.signal })
+    clearTimeout(timeout)
+    if (!res.ok) throw new Error(`Pollinations error: ${res.status}`)
+    const blob = await res.blob()
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onloadend = () => resolve(reader.result as string)
+      reader.onerror = reject
+      reader.readAsDataURL(blob)
+    })
+  } catch (err) {
+    clearTimeout(timeout)
+    throw err
+  }
 }
 
 /* ─── Helpers ─── */
@@ -37,6 +45,13 @@ const NOTE_COLORS = [
 
 function clamp(n: number, min: number, max: number) {
   return Math.min(Math.max(n, min), max)
+}
+
+function generateId() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID()
+  }
+  return `el-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
 }
 
 export default function StoryboardCanvas({ storyboard, onChange, readOnly }: Props) {
@@ -126,7 +141,7 @@ export default function StoryboardCanvas({ storyboard, onChange, readOnly }: Pro
     const elType = el.type as string
     const { type: _type, ...elRest } = el
     const newEl: StoryboardElement = {
-      id: `el-${Date.now()}`,
+      id: generateId(),
       type: elType === 'ai' ? 'image' : (el.type as StoryboardElement['type']),
       x: baseX + offset,
       y: baseY + offset,
@@ -232,6 +247,8 @@ export default function StoryboardCanvas({ storyboard, onChange, readOnly }: Pro
     updateElements(storyboard.elements.filter((e) => e.id !== selectedId))
     setSelectedId(null)
   }
+  const deleteSelectedRef = useRef(deleteSelected)
+  deleteSelectedRef.current = deleteSelected
 
   const updateSelected = (patch: Partial<StoryboardElement>) => {
     if (!selectedId) return
@@ -243,15 +260,16 @@ export default function StoryboardCanvas({ storyboard, onChange, readOnly }: Pro
   /* ─── Keyboard shortcuts ─── */
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      if (readOnly) return
       if (e.key === 'Delete' || e.key === 'Backspace') {
         const target = e.target as HTMLElement
         if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return
-        deleteSelected()
+        deleteSelectedRef.current()
       }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [selectedId, storyboard.elements])
+  }, [readOnly])
 
   /* ─── AI Generation ─── */
   const generateImage = async () => {
@@ -282,6 +300,16 @@ export default function StoryboardCanvas({ storyboard, onChange, readOnly }: Pro
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file.')
+      e.target.value = ''
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image must be smaller than 5MB.')
+      e.target.value = ''
+      return
+    }
     const reader = new FileReader()
     reader.onloadend = () => {
       addElement({ type: 'upload', content: reader.result as string })

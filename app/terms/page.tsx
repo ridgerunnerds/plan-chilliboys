@@ -16,7 +16,7 @@ export default function TermsPage() {
         <section>
           <h2 className="text-xl font-bold text-white mb-2">1. Acceptance of Terms</h2>
           <p>
-            By accessing or using the Chilli Boys Plan Portal (the "Service"), you agree to be
+            By accessing or using the Chilli Boys Plan Portal (the &quot;Service&quot;), you agree to be
             bound by these Terms of Service. If you disagree with any part of the terms, you may
             not access the Service.
           </p>

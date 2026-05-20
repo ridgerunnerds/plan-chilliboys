@@ -16,8 +16,8 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-xl font-bold text-white mb-2">1. Introduction</h2>
           <p>
-            Chilli Boys Manufacturing ("we", "us", or "our") operates the Plan Portal
-            (the "Service"). This page informs you of our policies regarding the collection,
+            Chilli Boys Manufacturing (&quot;we&quot;, &quot;us&quot;, or &quot;our&quot;) operates the Plan Portal
+            (the &quot;Service&quot;). This page informs you of our policies regarding the collection,
             use, and disclosure of personal data when you use our Service.
           </p>
         </section>

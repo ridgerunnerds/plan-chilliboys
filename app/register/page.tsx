@@ -11,27 +11,37 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   const { setUser } = useAuth()
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setLoading(true)
 
-    const existing = await getUserByEmail(email)
-    if (existing) {
-      setError('An account with that email already exists')
-      return
+    try {
+      const normalizedEmail = email.trim().toLowerCase()
+      const existing = await getUserByEmail(normalizedEmail)
+      if (existing) {
+        setError('An account with that email already exists')
+        setLoading(false)
+        return
+      }
+
+      const user = await storageRegister(name.trim(), normalizedEmail, password)
+      if (!user) {
+        setError('Failed to create account. Please try again.')
+        setLoading(false)
+        return
+      }
+
+      setUser(user)
+      router.push('/dashboard')
+    } catch (err: any) {
+      setError(err?.message || 'Something went wrong. Please try again.')
+      setLoading(false)
     }
-
-    const user = await storageRegister(name.trim(), email.trim().toLowerCase(), password)
-    if (!user) {
-      setError('Failed to create account. Please try again.')
-      return
-    }
-
-    setUser(user)
-    router.push('/dashboard')
   }
 
   return (
@@ -39,7 +49,7 @@ export default function RegisterPage() {
       <div className="card">
         <h1 className="text-2xl font-bold text-white mb-6 text-center">Create Account</h1>
         {error && (
-          <div className="bg-red-900/50 border border-red-700 text-red-200 px-4 py-2 rounded mb-4 text-sm">
+          <div className="bg-red-900/50 border border-red-700 text-red-200 px-4 py-2 rounded mb-4 text-sm" role="alert">
             {error}
           </div>
         )}
@@ -52,6 +62,7 @@ export default function RegisterPage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
+              autoComplete="name"
             />
           </div>
           <div>
@@ -62,6 +73,7 @@ export default function RegisterPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="email"
             />
           </div>
           <div>
@@ -72,10 +84,11 @@ export default function RegisterPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              autoComplete="new-password"
             />
           </div>
-          <button type="submit" className="btn-primary w-full">
-            Create Account
+          <button type="submit" className="btn-primary w-full" disabled={loading}>
+            {loading ? 'Creating...' : 'Create Account'}
           </button>
         </form>
         <p className="text-center text-steel-400 text-sm mt-4">
