@@ -6,19 +6,20 @@ import { useAuth } from '@/components/AuthProvider'
 import CreateProjectModal from '@/components/CreateProjectModal'
 import ManageUserModal from '@/components/ManageUserModal'
 import { formatWhatsAppMessage, openWhatsApp, GREG_WHATSAPP } from '@/lib/whatsapp'
-import { User, Project, getUsers, getProjects, saveProject, deleteProject, FeedbackMessage } from '@/lib/storage'
+import { User, Project, Storyboard, getUsers, getProjects, getStoryboards, saveProject, deleteProject, FeedbackMessage } from '@/lib/storage'
 
 export default function AdminPage() {
   const { user, loading } = useAuth()
   const router = useRouter()
   const [users, setUsers] = useState<User[]>([])
   const [projects, setProjects] = useState<Project[]>([])
-  const [activeTab, setActiveTab] = useState<'users' | 'projects'>('projects')
+  const [activeTab, setActiveTab] = useState<'users' | 'projects' | 'storyboards'>('projects')
   const [quoteInput, setQuoteInput] = useState<Record<string, string>>({})
   const [replyText, setReplyText] = useState<Record<string, string>>({})
   const [showProjectModal, setShowProjectModal] = useState(false)
   const [showUserModal, setShowUserModal] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
+  const [storyboards, setStoryboards] = useState<Storyboard[]>([])
 
   useEffect(() => {
     if (!loading && (!user || user.role !== 'admin')) {
@@ -26,9 +27,10 @@ export default function AdminPage() {
       return
     }
     async function load() {
-      const [u, p] = await Promise.all([getUsers(), getProjects()])
+      const [u, p, s] = await Promise.all([getUsers(), getProjects(), getStoryboards()])
       setUsers(u)
       setProjects(p)
+      setStoryboards(s)
     }
     if (user?.role === 'admin') load()
   }, [user, loading, router])
@@ -116,7 +118,7 @@ export default function AdminPage() {
       />
 
       <div className="flex space-x-2 mb-6">
-        {(['projects', 'users'] as const).map((tab) => (
+        {(['projects', 'users', 'storyboards'] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -173,6 +175,52 @@ export default function AdminPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'storyboards' && (
+        <div>
+          {storyboards.length === 0 && (
+            <div className="card text-center py-12">
+              <p className="text-steel-400">No storyboards yet.</p>
+            </div>
+          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {storyboards.map((sb) => {
+              const creator = users.find((u) => u.id === sb.userId)
+              return (
+                <div key={sb.id} className="card">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-bold text-white">{sb.name}</h3>
+                    <span className="text-xs text-steel-500">{sb.elements.length} elements</span>
+                  </div>
+                  <p className="text-xs text-steel-400 mb-2">
+                    By: {creator ? `${creator.name} (${creator.email})` : sb.userId}
+                  </p>
+                  <p className="text-xs text-steel-500">
+                    {new Date(sb.createdAt).toLocaleDateString()}
+                  </p>
+                  {sb.elements.length > 0 && (
+                    <div className="mt-3 p-2 bg-steel-900/50 rounded border border-steel-700 h-24 overflow-hidden relative">
+                      {sb.elements.slice(0, 5).map((el) => (
+                        <div
+                          key={el.id}
+                          className="absolute text-[8px] text-steel-500 border border-steel-700 rounded"
+                          style={{
+                            left: `${(el.x / 600) * 100}%`,
+                            top: `${(el.y / 400) * 100}%`,
+                            width: `${((el.width || 40) / 600) * 100}%`,
+                            height: `${((el.height || 30) / 400) * 100}%`,
+                            backgroundColor: el.type === 'shape' ? (el.color || '#005ce6') : undefined,
+                          }}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         </div>
       )}
