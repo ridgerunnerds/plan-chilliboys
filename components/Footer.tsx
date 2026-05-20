@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import Logo from './Logo'
+import Image from 'next/image'
 import OrigamiWave from './OrigamiWave'
 import BirdEasterEgg from './BirdEasterEgg'
 
@@ -32,7 +32,14 @@ export default function Footer() {
         </div>
         <div className="border-t border-chilliblue-800 mt-6 pt-6 flex flex-col items-center gap-4">
           <div className="flex items-center gap-3">
-            <Logo className="w-12 h-auto text-white opacity-80 hover:opacity-100 transition-opacity" />
+            <Image
+              src="/logo.png"
+              alt="Chilli Boys"
+              width={48}
+              height={40}
+              className="rounded opacity-80 hover:opacity-100 transition-opacity"
+              style={{ objectFit: 'contain' }}
+            />
             <OrigamiWave className="w-6 h-6 text-chilliblue-300 opacity-80 hover:opacity-100 transition-opacity" />
             <BirdEasterEgg variant="inline" />
           </div>
