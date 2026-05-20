@@ -9,15 +9,38 @@ export interface FeedbackMessage {
   createdAt: string
 }
 
+export interface PromptRevision {
+  id: string
+  text: string
+  createdAt: number
+}
+
+export interface ImageRevision {
+  id: string
+  url: string
+  promptId?: string
+  createdAt: number
+}
+
 export interface StoryboardElement {
   id: string
-  type: 'text' | 'shape' | 'image' | 'note'
+  type: 'text' | 'shape' | 'image' | 'note' | 'title' | 'upload'
   x: number
   y: number
   width?: number
   height?: number
   content?: string
   color?: string
+  fontSize?: number
+  fillOpacity?: number
+  borderColor?: string
+  borderWidth?: number
+  /* AI image generation fields (for 'image' type) */
+  prompt?: string
+  promptHistory?: PromptRevision[]
+  images?: ImageRevision[]
+  currentImageIndex?: number
+  isGenerating?: boolean
 }
 
 export interface User {
