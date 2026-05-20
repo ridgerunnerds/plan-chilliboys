@@ -110,18 +110,32 @@ async function fetchProfile(userId: string): Promise<any | null> {
       .select('*')
       .eq('id', userId)
       .limit(1)
-    if (error || !data || data.length === 0) return null
+    if (error) {
+      console.error('fetchProfile error:', error)
+      return null
+    }
+    if (!data || data.length === 0) {
+      console.log('fetchProfile: no profile found for', userId)
+      return null
+    }
+    console.log('fetchProfile: found profile', data[0])
     return data[0]
-  } catch {
+  } catch (err) {
+    console.error('fetchProfile exception:', err)
     return null
   }
 }
 
 async function ensureProfile(authUser: any): Promise<User> {
   const profile = await fetchProfile(authUser.id)
-  if (profile) return toUser(profile)
+  if (profile) {
+    const user = toUser(profile)
+    console.log('ensureProfile: using DB profile, role=', user.role)
+    return user
+  }
 
   const user = userFromAuth(authUser)
+  console.log('ensureProfile: falling back to auth metadata, role=', user.role)
   try {
     await supabase.from('profiles').insert({
       id: user.id,
