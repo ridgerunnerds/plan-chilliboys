@@ -81,14 +81,14 @@ export default function BirdEasterEgg() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'openai',
+          model: 'polly',
           messages: [
             {
               role: 'user',
               content: [
                 {
                   type: 'text',
-                  text: 'What bird species is in this photo? Respond ONLY in this exact JSON format: {"name":"common name","scientific":"scientific name","description":"one sentence description"}. If no bird is clearly visible, use {"name":"No bird detected","scientific":"N/A","description":"Try taking a clearer photo of a bird."}',
+                  text: 'Look at this photo and identify the bird species. Reply with just three lines:\n1. Common Name: [name]\n2. Scientific Name: [name]\n3. Brief Description: [1 sentence]\n\nIf no bird is visible, say "No bird detected" on the first line.',
                 },
                 {
                   type: 'image_url',
@@ -101,31 +101,39 @@ export default function BirdEasterEgg() {
       })
 
       if (!res.ok) {
-        throw new Error(`API error ${res.status}`)
+        const errText = await res.text().catch(() => '')
+        throw new Error(`API error ${res.status}: ${errText}`)
       }
 
       const data = await res.json()
       const text = data.choices?.[0]?.message?.content || ''
 
-      // Try to extract JSON from response
-      const jsonMatch = text.match(/\{[\s\S]*\}/)
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0])
-        setResult({
-          name: parsed.name || 'Unknown',
-          scientific: parsed.scientific || 'N/A',
-          description: parsed.description || '',
-        })
-      } else {
-        setResult({
-          name: 'Unknown',
-          scientific: 'N/A',
-          description: text,
-        })
+      // Parse the three-line response
+      const lines = text.split('\n').filter((l: string) => l.trim())
+      let name = 'Unknown'
+      let scientific = 'N/A'
+      let description = text
+
+      for (const line of lines) {
+        const lower = line.toLowerCase()
+        if (lower.includes('common name:')) {
+          name = line.split(':').slice(1).join(':').trim()
+        } else if (lower.includes('scientific name:')) {
+          scientific = line.split(':').slice(1).join(':').trim()
+        } else if (lower.includes('brief description:') || lower.includes('description:')) {
+          description = line.split(':').slice(1).join(':').trim()
+        }
       }
-    } catch (err) {
+
+      // If we parsed at least a name, use it; otherwise show raw text
+      if (name !== 'Unknown') {
+        setResult({ name, scientific, description })
+      } else {
+        setResult({ name: 'Unknown', scientific: 'N/A', description: text })
+      }
+    } catch (err: any) {
       console.error(err)
-      setError('Failed to identify bird. Please try again.')
+      setError(err?.message || 'Failed to identify bird. Please try again.')
     } finally {
       setLoading(false)
     }
