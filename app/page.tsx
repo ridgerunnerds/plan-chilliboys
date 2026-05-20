@@ -221,7 +221,7 @@ export default function Home() {
             You Dream It. <span className="text-chilliblue-400">We Build It.</span>
           </h1>
           <p className="text-lg md:text-xl text-chilliblue-100 max-w-2xl mx-auto mb-8">
-            Browse our catalog of textures, concepts, and ideas. Then create a free account
+            Browse our catalog of textures, concepts, and ideas. Contact us
             to design your project on our storyboard and get a custom quote.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -317,7 +317,7 @@ export default function Home() {
             </h2>
             <p className="text-chilliblue-100 mb-6">
               Answer a few quick questions and we will pre-fill your project details.
-              No account required — our team will follow up within 48 hours.
+              Our team will follow up within 48 hours.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link href="/plan" className="btn-primary text-lg px-8 py-3 inline-block">
