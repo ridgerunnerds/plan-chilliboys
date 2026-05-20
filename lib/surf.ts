@@ -100,7 +100,7 @@ function calculateSurfRating(
 async function fetchMarineData(): Promise<Partial<SurfConditions>> {
   const [marineRes, weatherRes] = await Promise.all([
     fetch(
-      `https://marine-api.open-meteo.com/v1/marine?latitude=${LAT}&longitude=${LON}&hourly=wave_height,wave_direction,wave_period,sea_surface_temperature,sea_level_height&forecast_days=1&timezone=auto`
+      `https://marine-api.open-meteo.com/v1/marine?latitude=${LAT}&longitude=${LON}&hourly=wave_height,wave_direction,wave_period,sea_surface_temperature&forecast_days=1&timezone=auto`
     ),
     fetch(
       `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m&forecast_days=1&timezone=auto`
@@ -125,7 +125,7 @@ async function fetchMarineData(): Promise<Partial<SurfConditions>> {
     wave_period: mHourly.wave_period?.[currentHour] ?? null,
     wave_direction: mHourly.wave_direction?.[currentHour] ?? null,
     sea_temp: mHourly.sea_surface_temperature?.[currentHour] ?? null,
-    tide_height: mHourly.sea_level_height?.[currentHour] ?? null,
+    tide_height: null,
     air_temp: wHourly.temperature_2m?.[currentHour] ?? null,
     humidity: wHourly.relative_humidity_2m?.[currentHour] ?? null,
     weather_code: wHourly.weather_code?.[currentHour] ?? null,
