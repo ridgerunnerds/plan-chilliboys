@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { categories, concepts, textures } from '@/lib/data'
+import BirdEasterEgg from '@/components/BirdEasterEgg'
 
 /* ─── Blueprint SVG decorations ─── */
 function BlueprintDecorations() {
@@ -326,6 +327,7 @@ export default function Home() {
           </div>
         </section>
       </div>
+      {entered && <BirdEasterEgg />}
     </>
   )
 }
