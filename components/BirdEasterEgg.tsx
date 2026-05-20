@@ -77,11 +77,16 @@ export default function BirdEasterEgg() {
     setError(null)
     try {
       const base64 = dataUrl.split(',')[1]
+      const apiKey = process.env.NEXT_PUBLIC_POLLINATIONS_API_KEY
+
       const res = await fetch('https://gen.pollinations.ai/v1/chat/completions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
         body: JSON.stringify({
-          model: 'qwen-vision',
+          model: 'openai',
           messages: [
             {
               role: 'user',
@@ -125,7 +130,6 @@ export default function BirdEasterEgg() {
         }
       }
 
-      // If we parsed at least a name, use it; otherwise show raw text
       if (name !== 'Unknown') {
         setResult({ name, scientific, description })
       } else {
