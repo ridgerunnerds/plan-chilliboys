@@ -16,6 +16,7 @@ export default function BirdEasterEgg({ variant = 'floating' }: { variant?: 'flo
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<BirdResult | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [zoom, setZoom] = useState(1)
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -65,13 +66,23 @@ export default function BirdEasterEgg({ variant = 'floating' }: { variant?: 'flo
     canvas.height = video.videoHeight || 480
     const ctx = canvas.getContext('2d')
     if (!ctx) return
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+
+    if (zoom > 1) {
+      // Crop to center for digital zoom effect
+      const sw = (video.videoWidth || 640) / zoom
+      const sh = (video.videoHeight || 480) / zoom
+      const sx = ((video.videoWidth || 640) - sw) / 2
+      const sy = ((video.videoHeight || 480) - sh) / 2
+      ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height)
+    } else {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+    }
 
     const dataUrl = canvas.toDataURL('image/jpeg', 0.85)
     setCaptured(dataUrl)
     stopCamera()
     identifyBird(dataUrl)
-  }, [stream])
+  }, [stream, zoom])
 
   const identifyBird = async (dataUrl: string) => {
     setLoading(true)
@@ -148,6 +159,7 @@ export default function BirdEasterEgg({ variant = 'floating' }: { variant?: 'flo
     setCaptured(null)
     setResult(null)
     setError(null)
+    setZoom(1)
     startCamera()
   }
 
@@ -209,24 +221,45 @@ export default function BirdEasterEgg({ variant = 'floating' }: { variant?: 'flo
 
               {/* Camera preview */}
               {!captured && !loading && (
-                <div className="relative rounded-lg overflow-hidden bg-black aspect-[4/3]">
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    muted
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute bottom-3 left-0 right-0 flex justify-center">
-                    <button
-                      onClick={capture}
-                      className="w-14 h-14 rounded-full border-4 border-white/80 bg-white/20 hover:bg-white/40 transition-colors flex items-center justify-center"
-                      aria-label="Take photo"
-                    >
-                      <div className="w-10 h-10 rounded-full bg-white" />
-                    </button>
+                <>
+                  <div className="relative rounded-lg overflow-hidden bg-black aspect-[4/3]">
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      style={{
+                        transform: `scale(${zoom})`,
+                        transformOrigin: 'center center',
+                      }}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute bottom-3 left-0 right-0 flex justify-center">
+                      <button
+                        onClick={capture}
+                        className="w-14 h-14 rounded-full border-4 border-white/80 bg-white/20 hover:bg-white/40 transition-colors flex items-center justify-center"
+                        aria-label="Take photo"
+                      >
+                        <div className="w-10 h-10 rounded-full bg-white" />
+                      </button>
+                    </div>
                   </div>
-                </div>
+                  {/* Zoom slider */}
+                  <div className="mt-3 flex items-center gap-3">
+                    <span className="text-white text-xs font-medium">1x</span>
+                    <input
+                      type="range"
+                      min={1}
+                      max={3}
+                      step={0.1}
+                      value={zoom}
+                      onChange={(e) => setZoom(parseFloat(e.target.value))}
+                      className="flex-1 h-1.5 appearance-none rounded-full bg-chilliblue-700 accent-chilliblue-400 cursor-pointer"
+                      aria-label="Zoom"
+                    />
+                    <span className="text-white text-xs font-medium">{zoom.toFixed(1)}x</span>
+                  </div>
+                </>
               )}
 
               {/* Captured image */}
