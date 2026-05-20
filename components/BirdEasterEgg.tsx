@@ -81,7 +81,7 @@ export default function BirdEasterEgg() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'polly',
+          model: 'qwen-vision',
           messages: [
             {
               role: 'user',
