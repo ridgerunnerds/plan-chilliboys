@@ -64,6 +64,21 @@ export default function StoryboardCanvas({ storyboard, onChange, readOnly }: Pro
     startElY: number
   } | null>(null)
 
+  /* Refs for event handlers (always current) */
+  const zoomRef = useRef(zoom)
+  const panRef = useRef(pan)
+  const isPanningRef = useRef(isPanning)
+  const panStartRef = useRef(panStart)
+  const draggingRef = useRef<typeof dragging>(null)
+  const storyboardRef = useRef(storyboard)
+
+  useEffect(() => { zoomRef.current = zoom }, [zoom])
+  useEffect(() => { panRef.current = pan }, [pan])
+  useEffect(() => { isPanningRef.current = isPanning }, [isPanning])
+  useEffect(() => { panStartRef.current = panStart }, [panStart])
+  useEffect(() => { draggingRef.current = dragging }, [dragging])
+  useEffect(() => { storyboardRef.current = storyboard }, [storyboard])
+
   const updateElements = (elements: StoryboardElement[]) => {
     const updated = { ...storyboard, elements, updatedAt: new Date().toISOString() }
     onChange(updated)
@@ -139,50 +154,11 @@ export default function StoryboardCanvas({ storyboard, onChange, readOnly }: Pro
     // Only pan if clicking empty canvas (not on an item)
     if ((e.target as HTMLElement).closest('[data-canvas-item]')) return
     setIsPanning(true)
+    isPanningRef.current = true
     setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y })
+    panStartRef.current = { x: e.clientX - pan.x, y: e.clientY - pan.y }
     setSelectedId(null)
   }
-
-  const handleCanvasMouseMove = useCallback(
-    (e: MouseEvent) => {
-      if (isPanning) {
-        setPan({ x: e.clientX - panStart.x, y: e.clientY - panStart.y })
-      }
-      if (dragging) {
-        const dx = (e.clientX - dragging.startMouseX) / zoom
-        const dy = (e.clientY - dragging.startMouseY) / zoom
-        const newX = dragging.startElX + dx
-        const newY = dragging.startElY + dy
-        onChange({
-          ...storyboard,
-          elements: storyboard.elements.map((el) =>
-            el.id === dragging.id ? { ...el, x: newX, y: newY } : el
-          ),
-          updatedAt: new Date().toISOString(),
-        })
-      }
-    },
-    [isPanning, panStart, dragging, zoom, storyboard, onChange]
-  )
-
-  const handleCanvasMouseUp = useCallback(() => {
-    if (isPanning) setIsPanning(false)
-    if (dragging) {
-      saveStoryboard(storyboard).catch((err) => console.error('Failed to save storyboard:', err))
-      setDragging(null)
-    }
-  }, [isPanning, dragging, storyboard])
-
-  useEffect(() => {
-    if (isPanning || dragging) {
-      window.addEventListener('mousemove', handleCanvasMouseMove)
-      window.addEventListener('mouseup', handleCanvasMouseUp)
-      return () => {
-        window.removeEventListener('mousemove', handleCanvasMouseMove)
-        window.removeEventListener('mouseup', handleCanvasMouseUp)
-      }
-    }
-  }, [isPanning, dragging, handleCanvasMouseMove, handleCanvasMouseUp])
 
   /* ─── Item Drag ─── */
   const handleItemMouseDown = (e: React.MouseEvent, id: string) => {
@@ -191,15 +167,57 @@ export default function StoryboardCanvas({ storyboard, onChange, readOnly }: Pro
     e.stopPropagation()
     const el = storyboard.elements.find((x) => x.id === id)
     if (!el) return
-    setDragging({
+    const dragState = {
       id,
       startMouseX: e.clientX,
       startMouseY: e.clientY,
       startElX: el.x,
       startElY: el.y,
-    })
+    }
+    setDragging(dragState)
+    draggingRef.current = dragState
     setSelectedId(id)
   }
+
+  /* ─── Global mouse events (registered once, reads from refs) ─── */
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      if (isPanningRef.current) {
+        setPan({ x: e.clientX - panStartRef.current.x, y: e.clientY - panStartRef.current.y })
+      }
+      if (draggingRef.current) {
+        const d = draggingRef.current
+        const dx = (e.clientX - d.startMouseX) / zoomRef.current
+        const dy = (e.clientY - d.startMouseY) / zoomRef.current
+        const newX = d.startElX + dx
+        const newY = d.startElY + dy
+        onChange({
+          ...storyboardRef.current,
+          elements: storyboardRef.current.elements.map((el) =>
+            el.id === d.id ? { ...el, x: newX, y: newY } : el
+          ),
+          updatedAt: new Date().toISOString(),
+        })
+      }
+    }
+    const onUp = () => {
+      if (isPanningRef.current) {
+        setIsPanning(false)
+        isPanningRef.current = false
+      }
+      if (draggingRef.current) {
+        saveStoryboard(storyboardRef.current).catch((err) => console.error('Failed to save storyboard:', err))
+        setDragging(null)
+        draggingRef.current = null
+      }
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+    return () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+  }, [onChange])
 
   /* ─── Selection & Editing ─── */
   const deleteSelected = () => {
