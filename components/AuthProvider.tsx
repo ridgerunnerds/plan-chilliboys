@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect } from 'react'
-import { User, getSession, logout as storageLogout, seedDemoData } from '@/lib/storage'
+import { User, getSession, logout as storageLogout } from '@/lib/storage'
 
 interface AuthContextType {
   user: User | null
@@ -28,7 +28,6 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     let mounted = true
     async function init() {
-      await seedDemoData()
       const session = await getSession()
       if (mounted) {
         if (session?.user) setUser(session.user)
