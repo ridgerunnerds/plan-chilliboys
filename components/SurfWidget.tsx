@@ -100,8 +100,8 @@ export default function SurfWidget({ variant = 'floating' }: { variant?: 'floati
               <div className="flex items-center gap-3">
                 <OrigamiWave className="w-8 h-8 text-chilliblue-300" />
                 <div>
-                  <h2 className="text-lg font-bold text-white">El Pescadero</h2>
-                  <p className="text-xs text-steel-400">Baja California Sur</p>
+                  <h2 className="text-lg font-bold text-white">Cerritos Beach</h2>
+                  <p className="text-xs text-steel-400">Playa Los Cerritos, BCS</p>
                 </div>
               </div>
 
@@ -152,9 +152,11 @@ export default function SurfWidget({ variant = 'floating' }: { variant?: 'floati
                       <p className="text-xs text-steel-400">Surface</p>
                     </div>
                     <div className="bg-steel-800/50 rounded-lg p-3">
-                      <p className="text-[10px] text-steel-500 uppercase tracking-wider">Tide</p>
-                      <p className="text-lg font-bold text-white">{data.tide_height?.toFixed(2) ?? '--'}m</p>
-                      <p className="text-xs text-steel-400">Above MSL</p>
+                      <p className="text-[10px] text-steel-500 uppercase tracking-wider">Conditions</p>
+                      <p className="text-sm font-bold text-white">{weatherDescription(data.weather_code)}</p>
+                      <p className={`text-xs font-bold mt-1 uppercase tracking-wider ${ratingColor(data.surf_rating)}`}>
+                        {data.surf_rating}
+                      </p>
                     </div>
                   </div>
 

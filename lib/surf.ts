@@ -1,6 +1,6 @@
 /* ─── Surf / Marine Conditions ───
  * Fetches from Open-Meteo (free, no API key) and caches in Supabase.
- * El Pescadero, BCS coordinates: 23.37, -110.17
+ * Cerritos Beach, BCS coordinates: 23.3147, -110.1719
  */
 
 import { supabase } from './supabase'
@@ -22,9 +22,9 @@ export interface SurfConditions {
   surf_rating: string
 }
 
-const LAT = 23.37
-const LON = -110.17
-const LOCATION_ID = 'el-pescadero'
+const LAT = 23.3147
+const LON = -110.1719
+const LOCATION_ID = 'cerritos-beach'
 const CACHE_MS = 60 * 60 * 1000 // 1 hour
 
 /* ─── Moon Phase Calculation ─── */
@@ -125,6 +125,9 @@ async function fetchMarineData(): Promise<Partial<SurfConditions>> {
     wave_period: mHourly.wave_period?.[currentHour] ?? null,
     wave_direction: mHourly.wave_direction?.[currentHour] ?? null,
     sea_temp: mHourly.sea_surface_temperature?.[currentHour] ?? null,
+    // Note: tide data requires a paid/free-tier tide API (e.g. WorldTides).
+    // Open-Meteo does not provide tide predictions. To enable tides,
+    // integrate a tide API and populate this field.
     tide_height: null,
     air_temp: wHourly.temperature_2m?.[currentHour] ?? null,
     humidity: wHourly.relative_humidity_2m?.[currentHour] ?? null,
