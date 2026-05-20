@@ -6,6 +6,7 @@ import './globals.css'
 import AuthProvider from '@/components/AuthProvider'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import SurfWidget from '@/components/SurfWidget'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -60,6 +61,7 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <AuthProvider>
+          <SurfWidget />
           <Navbar />
           <main className="min-h-[calc(100vh-200px)]">{children}</main>
           <Footer />

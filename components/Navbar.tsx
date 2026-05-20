@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useAuth } from './AuthProvider'
 
 export default function Navbar() {
@@ -38,9 +39,19 @@ export default function Navbar() {
     <nav className="sticky top-0 z-50 bg-chilliblue-900/90 backdrop-blur-md border-b border-chilliblue-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <Link href="/" className="flex items-center space-x-2">
-            <span className="text-xl font-bold text-white">Chilli Boys</span>
-            <span className="text-xs text-chilliblue-300 hidden sm:inline">Manufacturing</span>
+          <Link href="/" className="flex items-center space-x-3">
+            <Image
+              src="/logo.png"
+              alt="Chilli Boys"
+              width={36}
+              height={30}
+              className="rounded"
+              style={{ objectFit: 'contain' }}
+            />
+            <div className="flex flex-col">
+              <span className="text-xl font-bold text-white leading-tight">Chilli Boys</span>
+              <span className="text-[10px] text-chilliblue-300 leading-tight tracking-wider uppercase">Manufacturing</span>
+            </div>
           </Link>
 
           <div className="hidden md:flex items-center space-x-6">
