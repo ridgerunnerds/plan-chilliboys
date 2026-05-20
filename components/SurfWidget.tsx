@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import OrigamiWave from './OrigamiWave'
 import {
   SurfConditions,
   getSurfConditionsSmart,
@@ -63,18 +64,7 @@ export default function SurfWidget() {
         aria-label="Surf conditions"
         title="Surf conditions"
       >
-        <svg
-          className="w-5 h-5 text-chilliblue-300 group-hover:text-chilliblue-200 transition-colors"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-        >
-          <path d="M2 12c2-3 5-3 7 0s5 3 7 0 5-3 7 0" />
-          <path d="M2 16c2-3 5-3 7 0s5 3 7 0 5-3 7 0" />
-          <path d="M2 8c2-3 5-3 7 0s5 3 7 0 5-3 7 0" />
-        </svg>
+        <OrigamiWave className="w-5 h-5 text-chilliblue-300 group-hover:text-chilliblue-200 transition-colors" />
       </button>
 
       {/* Digital display modal */}
@@ -97,11 +87,7 @@ export default function SurfWidget() {
                 ×
               </button>
               <div className="flex items-center gap-3">
-                <svg className="w-8 h-8 text-chilliblue-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                  <path d="M2 12c2-3 5-3 7 0s5 3 7 0 5-3 7 0" />
-                  <path d="M2 16c2-3 5-3 7 0s5 3 7 0 5-3 7 0" />
-                  <path d="M2 8c2-3 5-3 7 0s5 3 7 0 5-3 7 0" />
-                </svg>
+                <OrigamiWave className="w-8 h-8 text-chilliblue-300" />
                 <div>
                   <h2 className="text-lg font-bold text-white">El Pescadero</h2>
                   <p className="text-xs text-steel-400">Baja California Sur</p>
