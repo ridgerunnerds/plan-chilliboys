@@ -77,7 +77,7 @@ export default function BirdEasterEgg() {
     setError(null)
     try {
       const base64 = dataUrl.split(',')[1]
-      const apiKey = process.env.NEXT_PUBLIC_POLLINATIONS_API_KEY
+      const apiKey = 'sk_Xldaes8JEJe8lGKFrNYPm0tsJxeiXlV9'
 
       const res = await fetch('https://gen.pollinations.ai/v1/chat/completions', {
         method: 'POST',
